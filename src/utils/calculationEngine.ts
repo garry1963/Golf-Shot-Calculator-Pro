@@ -259,6 +259,10 @@ export function calculateAdjustments(params: {
     recommendedClub,
     recommendedPower,
     lateralDrift: Math.round(lateralDrift * 10) / 10,
-    isFavorite: false
+    isFavorite: false,
+    playsLikeDistance: Math.round(effectiveDistance * 10) / 10,
+    slopeAdjustment: Math.round(elevationAdjustment * 10) / 10,
+    windDistanceAdjustment: Math.round(windDistanceAdjustment * 10) / 10,
+    liePenaltyFactor: Math.round((1 / lieMultiplier) * 100) / 100
   };
 }

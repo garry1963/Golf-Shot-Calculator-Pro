@@ -62,4 +62,8 @@ export interface ShotCalculation {
   recommendedPower: number; // percentage
   lateralDrift: number; // yards left or right
   isFavorite: boolean;
+  playsLikeDistance: number;
+  slopeAdjustment: number;
+  windDistanceAdjustment: number;
+  liePenaltyFactor: number;
 }

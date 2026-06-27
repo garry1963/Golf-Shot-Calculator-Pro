@@ -183,7 +183,7 @@ export default function App() {
         setHistory(JSON.parse(storedHistory));
       } else {
         // Seed some history logs
-        const initialHistory: ShotCalculation[] = [
+         const initialHistory: ShotCalculation[] = [
           {
             id: 'h1',
             timestamp: Date.now() - 3600000 * 24 * 2, // 2 days ago
@@ -201,7 +201,11 @@ export default function App() {
             recommendedClub: '5-Iron',
             recommendedPower: 102,
             lateralDrift: 0,
-            isFavorite: true
+            isFavorite: true,
+            playsLikeDistance: 178.8,
+            slopeAdjustment: 5.0,
+            windDistanceAdjustment: 13.8,
+            liePenaltyFactor: 1.0
           },
           {
             id: 'h2',
@@ -220,7 +224,11 @@ export default function App() {
             recommendedClub: '6-Iron',
             recommendedPower: 105,
             lateralDrift: 8.5,
-            isFavorite: false
+            isFavorite: false,
+            playsLikeDistance: 142.8,
+            slopeAdjustment: -2.2,
+            windDistanceAdjustment: 0.0,
+            liePenaltyFactor: 1.11
           }
         ];
         setHistory(initialHistory);
@@ -319,6 +327,23 @@ export default function App() {
       clubs
     });
   }, [practiceDistance, practiceElevation, practiceWindSpeed, practiceWindAngle, practiceLie, practiceShot, clubs, activeProfile]);
+
+  // Live Calculator tab calculations (for tablet split screen view)
+  const liveCalculation = useMemo(() => {
+    return calculateAdjustments({
+      targetDistance,
+      elevation,
+      windSpeed,
+      windAngle,
+      lieType: selectedLie,
+      shotType: selectedShot,
+      temperature,
+      altitude,
+      humidity,
+      profile: activeProfile as UserProfile,
+      clubs
+    });
+  }, [targetDistance, elevation, windSpeed, windAngle, selectedLie, selectedShot, temperature, altitude, humidity, activeProfile, clubs]);
 
   // Favorite Quick Recall SITUATION helper
   const handleFavoriteRecall = (fav: ShotCalculation) => {
@@ -703,8 +728,9 @@ export default function App() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -15 }}
                 transition={{ duration: 0.2 }}
-                className="p-4 space-y-4"
+                className="p-4 grid grid-cols-1 md:grid-cols-12 gap-5"
               >
+                <div className="md:col-span-7 space-y-4 flex flex-col">
                  {/* FAVORITES PRESET CAROUSEL (ONE TAP RECALL) */}
                 {favoritePresets.length > 0 && (
                   <div className="space-y-1.5">
@@ -1237,8 +1263,116 @@ export default function App() {
                     <span>View All ({history.length})</span>
                   </button>
                 </div>
+              </div>
 
-              </motion.div>
+              {/* RIGHT COLUMN (TABLET/DESKTOP LIVE CADDY SIDEBAR) */}
+              <div className="hidden md:flex md:col-span-5 flex-col h-full">
+                <div className={`p-5 rounded-3xl border flex-1 flex flex-col justify-between ${
+                  theme === 'dark' ? 'bg-slate-900/40 border-slate-800' : 'bg-slate-50 border-slate-200'
+                }`}>
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <span className="text-[10px] font-black uppercase tracking-widest text-green-500 block italic leading-none">
+                          Live Shot Telemetry
+                        </span>
+                        <span className="text-[10px] text-slate-400 block mt-1">
+                          Real-time tablet flight predictor
+                        </span>
+                      </div>
+                      <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" title="Telemetry live"></div>
+                    </div>
+
+                    {/* Main display showing liveCalculation */}
+                    <div className="bg-slate-950/60 rounded-2xl border border-slate-850 p-4 text-center relative overflow-hidden">
+                      <div className="absolute -top-12 -right-12 w-24 h-24 bg-green-500/5 rounded-full blur-2xl"></div>
+                      <span className="text-[8px] text-green-400 font-black uppercase tracking-[0.3em] block mb-1">RECOMMENDED CLUB</span>
+                      <h2 className="text-4xl font-black text-white leading-none tracking-tighter uppercase mb-2">
+                        {liveCalculation.recommendedClub || 'N/A'}
+                      </h2>
+                      
+                      <div className="flex justify-center items-center gap-4 mt-3 pt-3 border-t border-slate-800/40">
+                        <div className="flex flex-col items-center">
+                          <span className="text-lg font-mono text-slate-100 font-black">{liveCalculation.recommendedPower}%</span>
+                          <span className="text-[8px] text-slate-500 uppercase font-bold tracking-wider">Swing Power</span>
+                        </div>
+                        <div className="h-6 w-[1px] bg-slate-800"></div>
+                        <div className="flex flex-col items-center">
+                          <span className="text-lg font-mono text-slate-100 font-black">
+                            {liveCalculation.lateralDrift === 0 ? '0.0y' : `${Math.abs(liveCalculation.lateralDrift)}y`}
+                          </span>
+                          <span className="text-[8px] text-slate-500 uppercase font-bold tracking-wider">
+                            {liveCalculation.lateralDrift > 0 ? 'Left Bias' : liveCalculation.lateralDrift < 0 ? 'Right Bias' : 'Straight'}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Side-by-side details */}
+                    <div className="grid grid-cols-2 gap-2.5">
+                      <div className={`p-3 rounded-xl border text-center ${
+                        theme === 'dark' ? 'bg-slate-950/40 border-slate-850' : 'bg-slate-100/50 border-slate-200'
+                      }`}>
+                        <span className="text-[8px] text-slate-500 uppercase font-bold tracking-wider block mb-0.5">AIM CORRECTION</span>
+                        <strong className={`text-[11px] font-black font-mono block truncate ${
+                          liveCalculation.lateralDrift > 0 ? 'text-rose-400' : liveCalculation.lateralDrift < 0 ? 'text-blue-400' : 'text-slate-400'
+                        }`}>
+                          {liveCalculation.lateralDrift === 0 ? 'AIM STRAIGHT' : 
+                           liveCalculation.lateralDrift > 0 ? `AIM ${Math.abs(liveCalculation.lateralDrift)}y LEFT` : `AIM ${Math.abs(liveCalculation.lateralDrift)}y RIGHT`}
+                        </strong>
+                      </div>
+
+                      <div className={`p-3 rounded-xl border text-center ${
+                        theme === 'dark' ? 'bg-slate-950/40 border-slate-850' : 'bg-slate-100/50 border-slate-200'
+                      }`}>
+                        <span className="text-[8px] text-slate-500 uppercase font-bold tracking-wider block mb-0.5">PLAYS LIKE DIST.</span>
+                        <strong className="text-[11px] font-black font-mono text-green-400 block">
+                          {liveCalculation.playsLikeDistance.toFixed(1)} YARDS
+                        </strong>
+                      </div>
+                    </div>
+
+                    {/* Decomposition components */}
+                    <div className="space-y-1.5 text-[10px] font-mono opacity-90 bg-slate-950/40 p-3 rounded-xl border border-slate-850">
+                      <div className="flex justify-between">
+                        <span className="text-slate-500">Target Yardage:</span>
+                        <span className="text-slate-300 font-bold">{targetDistance}y</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-slate-500">Elevation Offset:</span>
+                        <span className={liveCalculation.slopeAdjustment > 0 ? 'text-rose-400' : liveCalculation.slopeAdjustment < 0 ? 'text-green-400' : 'text-slate-300'}>
+                          {liveCalculation.slopeAdjustment > 0 ? `+${liveCalculation.slopeAdjustment.toFixed(1)}y` : liveCalculation.slopeAdjustment < 0 ? `${liveCalculation.slopeAdjustment.toFixed(1)}y` : '0.0y'}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-slate-500">Wind Adjustment:</span>
+                        <span className={liveCalculation.windDistanceAdjustment > 0 ? 'text-rose-400' : liveCalculation.windDistanceAdjustment < 0 ? 'text-green-400' : 'text-slate-300'}>
+                          {liveCalculation.windDistanceAdjustment > 0 ? `+${liveCalculation.windDistanceAdjustment.toFixed(1)}y` : liveCalculation.windDistanceAdjustment < 0 ? `${liveCalculation.windDistanceAdjustment.toFixed(1)}y` : '0.0y'}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-slate-500">Lie Penalty:</span>
+                        <span className={liveCalculation.liePenaltyFactor > 1 ? 'text-rose-400' : 'text-slate-300'}>
+                          {liveCalculation.liePenaltyFactor > 1 ? `x${liveCalculation.liePenaltyFactor.toFixed(2)}` : 'None'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="pt-4 space-y-2">
+                    <button
+                      type="button"
+                      onClick={handleCalculateShot}
+                      className="w-full py-3 bg-green-500 hover:bg-green-400 text-slate-950 font-black rounded-2xl text-xs uppercase flex items-center justify-center gap-1.5 cursor-pointer transition-colors shadow-md shadow-green-950/20"
+                    >
+                      <History className="h-4 w-4" />
+                      <span>Log Shot to Database</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+            </motion.div>
             )}
 
             {/* TAB 2: PRACTICE MODE */}
@@ -1249,8 +1383,9 @@ export default function App() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -15 }}
                 transition={{ duration: 0.2 }}
-                className="p-4 space-y-4"
+                className="p-4 grid grid-cols-1 md:grid-cols-12 gap-5"
               >
+                <div className="md:col-span-7 space-y-4">
                 {/* Visual Trajectory Display */}
                 <div>
                   <div className="flex justify-between items-center mb-1.5">
@@ -1307,9 +1442,12 @@ export default function App() {
                     </div>
                   </div>
                 </div>
+              </div>
 
-                {/* Practice Live Sliders */}
-                <div className="space-y-4">
+                {/* RIGHT COLUMN: SLIDERS & CONFIG (md:col-span-5) */}
+                <div className="md:col-span-5 space-y-4 flex flex-col justify-between">
+                  {/* Practice Live Sliders */}
+                  <div className="space-y-4">
                   <div className={`p-3.5 rounded-2xl border ${
                     theme === 'dark' ? 'bg-slate-900/30 border-slate-800/80' : 'bg-slate-100/50 border-slate-200'
                   }`}>
@@ -1480,8 +1618,9 @@ export default function App() {
                     </div>
                   </div>
                 </div>
+              </div>
 
-              </motion.div>
+            </motion.div>
             )}
 
             {/* TAB 3: CLUB DATABASE */}
@@ -1639,7 +1778,7 @@ export default function App() {
                 )}
 
                 {/* CLUB LISTINGS */}
-                <div className="space-y-2">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                   {clubs.map(club => (
                     <div 
                       key={club.id}
@@ -1849,10 +1988,12 @@ export default function App() {
 
                 {/* STATISTICS GRAPHS */}
                 {history.length > 1 ? (
-                  <div className="space-y-4">
+                  <div className="space-y-3">
                     <span className="text-[10px] text-slate-500 uppercase font-bold tracking-wider italic">
                       📊 Performance Metrics & Analytics
                     </span>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
                     {/* Chart 1: Club Usage Frequencies */}
                     <div className={`p-3 rounded-2xl border ${
@@ -1926,6 +2067,7 @@ export default function App() {
                     </div>
 
                   </div>
+                </div>
                 ) : (
                   <div className="p-10 text-center opacity-60 text-xs">
                     Please perform at least 2 shot calculations to generate interactive analytics dashboards and statistics metrics!
@@ -1942,7 +2084,7 @@ export default function App() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -15 }}
                 transition={{ duration: 0.2 }}
-                className="p-4 space-y-4"
+                className="p-4 grid grid-cols-1 md:grid-cols-2 gap-5"
               >
                 {/* Active user profile details */}
                 <div className={`p-4 rounded-3xl border ${
