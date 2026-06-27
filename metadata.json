@@ -1,0 +1,6 @@
+{
+  "name": "Golf Shot Calculator Pro",
+  "description": "A professional golf shot-planning calculator for simulation games and real-world play. Calculate precise yardage adjustments for wind speed/angle, elevation, lie type, shot style, custom rules, club statistics, and favorites.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
