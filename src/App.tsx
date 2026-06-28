@@ -790,11 +790,11 @@ export default function App() {
                       <button
                         type="button"
                         onClick={() => {
-                          setTargetDistance(prev => Math.max(40, prev - 5));
+                          setTargetDistance(prev => Math.max(40, prev - 1));
                           triggerHaptic('click');
                         }}
                         className="w-6 h-6 shrink-0 rounded-full border border-slate-700 dark:border-slate-800 hover:border-green-500 flex items-center justify-center text-slate-400 hover:text-green-400 bg-slate-900/50 active:scale-90 transition-all select-none cursor-pointer"
-                        title="Decrease by 5 yards"
+                        title="Decrease by 1 yard"
                       >
                         <Minus className="h-3 w-3" />
                       </button>
@@ -802,7 +802,7 @@ export default function App() {
                         type="range"
                         min={40}
                         max={350}
-                        step={5}
+                        step={1}
                         value={targetDistance}
                         onChange={(e) => {
                           setTargetDistance(Number(e.target.value));
@@ -813,11 +813,11 @@ export default function App() {
                       <button
                         type="button"
                         onClick={() => {
-                          setTargetDistance(prev => Math.min(350, prev + 5));
+                          setTargetDistance(prev => Math.min(350, prev + 1));
                           triggerHaptic('click');
                         }}
                         className="w-6 h-6 shrink-0 rounded-full border border-slate-700 dark:border-slate-800 hover:border-green-500 flex items-center justify-center text-slate-400 hover:text-green-400 bg-slate-900/50 active:scale-90 transition-all select-none cursor-pointer"
-                        title="Increase by 5 yards"
+                        title="Increase by 1 yard"
                       >
                         <Plus className="h-3 w-3" />
                       </button>
@@ -1459,11 +1459,11 @@ export default function App() {
                       <button
                         type="button"
                         onClick={() => {
-                          setPracticeDistance(prev => Math.max(60, prev - 5));
+                          setPracticeDistance(prev => Math.max(60, prev - 1));
                           triggerHaptic('click');
                         }}
                         className="w-5 h-5 shrink-0 rounded-full border border-slate-750 dark:border-slate-800 hover:border-green-500 flex items-center justify-center text-slate-400 hover:text-green-400 bg-slate-900/50 active:scale-90 transition-all select-none cursor-pointer"
-                        title="Decrease by 5 yards"
+                        title="Decrease by 1 yard"
                       >
                         <Minus className="h-2.5 w-2.5" />
                       </button>
@@ -1471,6 +1471,7 @@ export default function App() {
                         type="range"
                         min={60}
                         max={300}
+                        step={1}
                         value={practiceDistance}
                         onChange={(e) => {
                           setPracticeDistance(Number(e.target.value));
@@ -1481,11 +1482,11 @@ export default function App() {
                       <button
                         type="button"
                         onClick={() => {
-                          setPracticeDistance(prev => Math.min(300, prev + 5));
+                          setPracticeDistance(prev => Math.min(300, prev + 1));
                           triggerHaptic('click');
                         }}
                         className="w-5 h-5 shrink-0 rounded-full border border-slate-750 dark:border-slate-800 hover:border-green-500 flex items-center justify-center text-slate-400 hover:text-green-400 bg-slate-900/50 active:scale-90 transition-all select-none cursor-pointer"
-                        title="Increase by 5 yards"
+                        title="Increase by 1 yard"
                       >
                         <Plus className="h-2.5 w-2.5" />
                       </button>
