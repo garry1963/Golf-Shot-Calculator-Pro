@@ -106,6 +106,78 @@ export default function App() {
   const [aiResponse, setAiResponse] = useState<any | null>(null);
   const [aiError, setAiError] = useState<string | null>(null);
 
+  // Compass Dragging States
+  const compassRef = useRef<HTMLDivElement>(null);
+  const [isDraggingCompass, setIsDraggingCompass] = useState<boolean>(false);
+
+  const handleCompassInteraction = (clientX: number, clientY: number) => {
+    if (!compassRef.current) return;
+    const rect = compassRef.current.getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2;
+    const centerY = rect.top + rect.height / 2;
+    
+    const dx = clientX - centerX;
+    const dy = clientY - centerY;
+    
+    let angle = Math.atan2(dx, -dy) * (180 / Math.PI);
+    if (angle < 0) angle += 360;
+    
+    // Round to nearest degree
+    setWindAngle(Math.round(angle));
+  };
+
+  const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (e.button !== 0) return; // Only handle left click
+    setIsDraggingCompass(true);
+    handleCompassInteraction(e.clientX, e.clientY);
+    triggerHaptic('click');
+  };
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!isDraggingCompass) return;
+    handleCompassInteraction(e.clientX, e.clientY);
+  };
+
+  const handleTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
+    setIsDraggingCompass(true);
+    if (e.touches.length > 0) {
+      handleCompassInteraction(e.touches[0].clientX, e.touches[0].clientY);
+      triggerHaptic('click');
+    }
+  };
+
+  const handleTouchMove = (e: React.TouchEvent<HTMLDivElement>) => {
+    if (!isDraggingCompass) return;
+    if (e.touches.length > 0) {
+      handleCompassInteraction(e.touches[0].clientX, e.touches[0].clientY);
+    }
+  };
+
+  useEffect(() => {
+    const handleGlobalMouseUp = () => {
+      setIsDraggingCompass(false);
+    };
+    window.addEventListener('mouseup', handleGlobalMouseUp);
+    window.addEventListener('touchend', handleGlobalMouseUp);
+    return () => {
+      window.removeEventListener('mouseup', handleGlobalMouseUp);
+      window.removeEventListener('touchend', handleGlobalMouseUp);
+    };
+  }, [isDraggingCompass]);
+
+  const getWindDirectionLabel = (angle: number) => {
+    const deg = angle % 360;
+    if (deg >= 337.5 || deg < 22.5) return 'Headwind';
+    if (deg >= 22.5 && deg < 67.5) return 'Cross-Head R';
+    if (deg >= 67.5 && deg < 112.5) return 'Crosswind R';
+    if (deg >= 112.5 && deg < 157.5) return 'Cross-Tail R';
+    if (deg >= 157.5 && deg < 202.5) return 'Tailwind';
+    if (deg >= 202.5 && deg < 247.5) return 'Cross-Tail L';
+    if (deg >= 247.5 && deg < 292.5) return 'Crosswind L';
+    if (deg >= 292.5 && deg < 337.5) return 'Cross-Head L';
+    return '';
+  };
+
   // New club template
   const [newClub, setNewClub] = useState<Partial<Club>>({
     name: '',
@@ -902,36 +974,66 @@ export default function App() {
                 </div>
 
                 {/* WIND ADJUSTMENT COMPASS PANEL */}
-                <div className={`p-4 rounded-3xl border ${
+                <div className={`p-5 rounded-3xl border transition-all ${
                   theme === 'dark' ? 'bg-slate-900/50 border-slate-800/80' : 'bg-white border-slate-200'
                 }`}>
-                  <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-1.5">
-                      <Wind className="h-4 w-4 text-green-400" />
-                      <span className="text-[10px] text-slate-500 uppercase font-bold tracking-wider italic">Wind Adjuster</span>
+                      <Wind className="h-4.5 w-4.5 text-green-400 animate-pulse" />
+                      <span className="text-[10px] sm:text-xs text-slate-500 uppercase font-black tracking-wider italic">Wind Adjuster</span>
                     </div>
-                    <span className="text-xs font-bold font-mono text-green-400">{windSpeed} MPH</span>
+                    <span className="text-xs sm:text-sm font-extrabold font-mono text-green-400 bg-green-500/10 px-2 py-0.5 rounded-full">{windSpeed} MPH</span>
                   </div>
 
-                  <div className="flex items-center justify-around gap-4">
+                  <div className="flex flex-col sm:flex-row items-center justify-center sm:justify-around gap-6 py-2">
                     {/* Visual Compass Dial */}
-                    <div className="relative w-24 h-24 rounded-full border border-slate-800 flex items-center justify-center bg-slate-950/40 select-none">
-                      {/* Compass directions (clickable) */}
+                    <div 
+                      ref={compassRef}
+                      onMouseDown={handleMouseDown}
+                      onMouseMove={handleMouseMove}
+                      onTouchStart={handleTouchStart}
+                      onTouchMove={handleTouchMove}
+                      className={`relative w-36 h-36 rounded-full border-2 flex items-center justify-center select-none cursor-crosshair transition-all duration-200 touch-none ${
+                        theme === 'dark' 
+                          ? 'bg-slate-950/70 border-slate-800 hover:border-green-500/50 shadow-inner' 
+                          : 'bg-slate-50/50 border-slate-200 hover:border-green-500/40 shadow-inner'
+                      } ${isDraggingCompass ? 'ring-4 ring-green-500/20 border-green-500' : ''}`}
+                    >
+                      {/* Compass Ticks */}
+                      {Array.from({ length: 12 }).map((_, i) => {
+                        const angle = i * 30;
+                        return (
+                          <div
+                            key={i}
+                            className="absolute w-0.5 h-1.5 origin-bottom"
+                            style={{
+                              transform: `rotate(${angle}deg) translateY(-66px)`,
+                              bottom: '50%',
+                              left: 'calc(50% - 1px)',
+                              backgroundColor: angle % 90 === 0 
+                                ? 'rgba(34, 197, 94, 0.6)' 
+                                : theme === 'dark' ? 'rgba(148, 163, 184, 0.25)' : 'rgba(100, 116, 139, 0.35)',
+                            }}
+                          />
+                        );
+                      })}
+
+                      {/* Compass directions (clickable / interactive) */}
                       <button
                         type="button"
-                        onClick={() => { setWindAngle(0); triggerHaptic('click'); }}
-                        className={`absolute top-0.5 left-1/2 -translate-x-1/2 text-[9px] font-mono font-black transition-all cursor-pointer select-none outline-none ${
-                          (windAngle === 0 || windAngle === 360) ? 'text-green-400 scale-110' : 'text-slate-500 hover:text-green-400'
+                        onClick={(e) => { e.stopPropagation(); setWindAngle(0); triggerHaptic('click'); }}
+                        className={`absolute top-2 left-1/2 -translate-x-1/2 text-[10px] font-mono font-black transition-all cursor-pointer select-none outline-none z-20 ${
+                          (windAngle === 0 || windAngle === 360) ? 'text-green-400 scale-125 font-black drop-shadow-[0_0_6px_rgba(34,197,94,0.6)]' : 'text-slate-500 hover:text-green-400'
                         }`}
-                        title="Set Wind North (0°)"
+                        title="Set Wind North (0° - Headwind)"
                       >
                         N
                       </button>
                       <button
                         type="button"
-                        onClick={() => { setWindAngle(45); triggerHaptic('click'); }}
-                        className={`absolute top-[13px] right-[13px] text-[7.5px] font-mono font-black transition-all cursor-pointer select-none outline-none ${
-                          windAngle === 45 ? 'text-green-400 scale-110' : 'text-slate-500 hover:text-green-400'
+                        onClick={(e) => { e.stopPropagation(); setWindAngle(45); triggerHaptic('click'); }}
+                        className={`absolute top-[24px] right-[24px] text-[8px] font-mono font-black transition-all cursor-pointer select-none outline-none z-20 ${
+                          windAngle === 45 ? 'text-green-400 scale-125 font-black drop-shadow-[0_0_6px_rgba(34,197,94,0.6)]' : 'text-slate-500 hover:text-green-400'
                         }`}
                         title="Set Wind North-East (45°)"
                       >
@@ -939,19 +1041,19 @@ export default function App() {
                       </button>
                       <button
                         type="button"
-                        onClick={() => { setWindAngle(90); triggerHaptic('click'); }}
-                        className={`absolute right-1 top-1/2 -translate-y-1/2 text-[9px] font-mono font-black transition-all cursor-pointer select-none outline-none ${
-                          windAngle === 90 ? 'text-green-400 scale-110' : 'text-slate-500 hover:text-green-400'
+                        onClick={(e) => { e.stopPropagation(); setWindAngle(90); triggerHaptic('click'); }}
+                        className={`absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-mono font-black transition-all cursor-pointer select-none outline-none z-20 ${
+                          windAngle === 90 ? 'text-green-400 scale-125 font-black drop-shadow-[0_0_6px_rgba(34,197,94,0.6)]' : 'text-slate-500 hover:text-green-400'
                         }`}
-                        title="Set Wind East (90°)"
+                        title="Set Wind East (90° - Right Crosswind)"
                       >
                         E
                       </button>
                       <button
                         type="button"
-                        onClick={() => { setWindAngle(135); triggerHaptic('click'); }}
-                        className={`absolute bottom-[13px] right-[13px] text-[7.5px] font-mono font-black transition-all cursor-pointer select-none outline-none ${
-                          windAngle === 135 ? 'text-green-400 scale-110' : 'text-slate-500 hover:text-green-400'
+                        onClick={(e) => { e.stopPropagation(); setWindAngle(135); triggerHaptic('click'); }}
+                        className={`absolute bottom-[24px] right-[24px] text-[8px] font-mono font-black transition-all cursor-pointer select-none outline-none z-20 ${
+                          windAngle === 135 ? 'text-green-400 scale-125 font-black drop-shadow-[0_0_6px_rgba(34,197,94,0.6)]' : 'text-slate-500 hover:text-green-400'
                         }`}
                         title="Set Wind South-East (135°)"
                       >
@@ -959,19 +1061,19 @@ export default function App() {
                       </button>
                       <button
                         type="button"
-                        onClick={() => { setWindAngle(180); triggerHaptic('click'); }}
-                        className={`absolute bottom-0.5 left-1/2 -translate-x-1/2 text-[9px] font-mono font-black transition-all cursor-pointer select-none outline-none ${
-                          windAngle === 180 ? 'text-green-400 scale-110' : 'text-slate-500 hover:text-green-400'
+                        onClick={(e) => { e.stopPropagation(); setWindAngle(180); triggerHaptic('click'); }}
+                        className={`absolute bottom-2 left-1/2 -translate-x-1/2 text-[10px] font-mono font-black transition-all cursor-pointer select-none outline-none z-20 ${
+                          windAngle === 180 ? 'text-green-400 scale-125 font-black drop-shadow-[0_0_6px_rgba(34,197,94,0.6)]' : 'text-slate-500 hover:text-green-400'
                         }`}
-                        title="Set Wind South (180°)"
+                        title="Set Wind South (180° - Tailwind)"
                       >
                         S
                       </button>
                       <button
                         type="button"
-                        onClick={() => { setWindAngle(225); triggerHaptic('click'); }}
-                        className={`absolute bottom-[13px] left-[13px] text-[7.5px] font-mono font-black transition-all cursor-pointer select-none outline-none ${
-                          windAngle === 225 ? 'text-green-400 scale-110' : 'text-slate-500 hover:text-green-400'
+                        onClick={(e) => { e.stopPropagation(); setWindAngle(225); triggerHaptic('click'); }}
+                        className={`absolute bottom-[24px] left-[24px] text-[8px] font-mono font-black transition-all cursor-pointer select-none outline-none z-20 ${
+                          windAngle === 225 ? 'text-green-400 scale-125 font-black drop-shadow-[0_0_6px_rgba(34,197,94,0.6)]' : 'text-slate-500 hover:text-green-400'
                         }`}
                         title="Set Wind South-West (225°)"
                       >
@@ -979,57 +1081,88 @@ export default function App() {
                       </button>
                       <button
                         type="button"
-                        onClick={() => { setWindAngle(270); triggerHaptic('click'); }}
-                        className={`absolute left-1 top-1/2 -translate-y-1/2 text-[9px] font-mono font-black transition-all cursor-pointer select-none outline-none ${
-                          windAngle === 270 ? 'text-green-400 scale-110' : 'text-slate-500 hover:text-green-400'
+                        onClick={(e) => { e.stopPropagation(); setWindAngle(270); triggerHaptic('click'); }}
+                        className={`absolute left-2 top-1/2 -translate-y-1/2 text-[10px] font-mono font-black transition-all cursor-pointer select-none outline-none z-20 ${
+                          windAngle === 270 ? 'text-green-400 scale-125 font-black drop-shadow-[0_0_6px_rgba(34,197,94,0.6)]' : 'text-slate-500 hover:text-green-400'
                         }`}
-                        title="Set Wind West (270°)"
+                        title="Set Wind West (270° - Left Crosswind)"
                       >
                         W
                       </button>
                       <button
                         type="button"
-                        onClick={() => { setWindAngle(315); triggerHaptic('click'); }}
-                        className={`absolute top-[13px] left-[13px] text-[7.5px] font-mono font-black transition-all cursor-pointer select-none outline-none ${
-                          windAngle === 315 ? 'text-green-400 scale-110' : 'text-slate-500 hover:text-green-400'
+                        onClick={(e) => { e.stopPropagation(); setWindAngle(315); triggerHaptic('click'); }}
+                        className={`absolute top-[24px] left-[24px] text-[8px] font-mono font-black transition-all cursor-pointer select-none outline-none z-20 ${
+                          windAngle === 315 ? 'text-green-400 scale-125 font-black drop-shadow-[0_0_6px_rgba(34,197,94,0.6)]' : 'text-slate-500 hover:text-green-400'
                         }`}
                         title="Set Wind North-West (315°)"
                       >
                         NW
                       </button>
 
-                      {/* Rotating Arrow */}
-                      <div 
-                        className="absolute w-12 h-0.5 bg-gradient-to-r from-transparent to-green-500 rounded-full origin-center transition-transform duration-300 pointer-events-none"
-                        style={{ transform: `rotate(${windAngle - 90}deg)` }}
+                      {/* Compass SVG needle with subtle gradients and drop shadow */}
+                      <svg 
+                        className="absolute inset-0 w-full h-full pointer-events-none transition-transform duration-300"
+                        style={{ transform: `rotate(${windAngle}deg)` }}
+                        viewBox="0 0 144 144"
                       >
-                        <div className="absolute right-0 top-1/2 -translate-y-1/2 w-1.5 h-1.5 bg-green-500 rounded-full"></div>
-                      </div>
+                        <defs>
+                          <linearGradient id="windNeedleGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                            <stop offset="0%" stopColor="#22c55e" />
+                            <stop offset="100%" stopColor="#15803d" />
+                          </linearGradient>
+                          <linearGradient id="windNeedleTail" x1="0%" y1="0%" x2="0%" y2="100%">
+                            <stop offset="0%" stopColor="#475569" />
+                            <stop offset="100%" stopColor="#1e293b" />
+                          </linearGradient>
+                        </defs>
+                        
+                        {/* Interactive drag path indicator */}
+                        <circle cx="72" cy="72" r="46" fill="none" stroke="rgba(34, 197, 94, 0.08)" strokeDasharray="3,3" />
+                        <circle cx="72" cy="72" r="60" fill="none" stroke="rgba(148, 163, 184, 0.06)" strokeWidth="1" />
+                        
+                        {/* Compass Needle - North Pointer */}
+                        <path 
+                          d="M 72 24 L 76.5 60 L 72 56.5 L 67.5 60 Z" 
+                          fill="url(#windNeedleGrad)" 
+                          className="drop-shadow-[0_2px_4px_rgba(34,197,94,0.4)]"
+                        />
+                        
+                        {/* Compass Needle - South Tail */}
+                        <path 
+                          d="M 72 120 L 74.5 84 L 72 87.5 L 69.5 84 Z" 
+                          fill="url(#windNeedleTail)" 
+                        />
+                      </svg>
 
                       {/* Compass core */}
-                      <div className="w-5 h-5 rounded-full bg-slate-900 border border-slate-800 shadow-inner z-10 flex items-center justify-center pointer-events-none">
-                        <span className="text-[8px] font-bold text-slate-300">{windAngle}°</span>
+                      <div className={`w-8 h-8 rounded-full shadow-lg z-10 flex items-center justify-center pointer-events-none border transition-colors ${
+                        theme === 'dark' ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
+                      }`}>
+                        <span className="text-[10px] font-black text-green-500 font-mono">{windAngle}°</span>
                       </div>
                     </div>
 
                     {/* Wind control sliders */}
-                    <div className="flex-1 space-y-3">
+                    <div className="flex-1 w-full space-y-4">
                       <div>
-                        <div className="flex justify-between text-[10px] mb-1 font-mono">
-                          <span className="opacity-70">Speed</span>
-                          <span>{windSpeed} mph</span>
+                        <div className="flex justify-between text-[11px] mb-1 font-mono">
+                          <span className="opacity-70 font-semibold uppercase tracking-wider">Speed</span>
+                          <span className="font-extrabold text-green-400">{windSpeed} mph</span>
                         </div>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2.5">
                           <button
                             type="button"
                             onClick={() => {
                               setWindSpeed(prev => Math.max(0, prev - 1));
                               triggerHaptic('click');
                             }}
-                            className="w-5 h-5 shrink-0 rounded-full border border-slate-700 dark:border-slate-800 hover:border-green-500 flex items-center justify-center text-slate-400 hover:text-green-400 bg-slate-900/50 active:scale-90 transition-all select-none cursor-pointer"
+                            className={`w-8 h-8 shrink-0 rounded-full border flex items-center justify-center text-slate-400 hover:text-green-400 active:scale-90 transition-all select-none cursor-pointer ${
+                              theme === 'dark' ? 'border-slate-800 bg-slate-900/50' : 'border-slate-200 bg-slate-100/50'
+                            }`}
                             title="Decrease by 1 mph"
                           >
-                            <Minus className="h-2.5 w-2.5" />
+                            <Minus className="h-3 w-3" />
                           </button>
                           <input 
                             type="range"
@@ -1040,7 +1173,7 @@ export default function App() {
                               setWindSpeed(Number(e.target.value));
                               triggerHaptic('click');
                             }}
-                            className="flex-1 accent-green-500 h-1 rounded-lg"
+                            className="flex-1 accent-green-500 h-1.5 rounded-lg cursor-pointer bg-slate-800"
                           />
                           <button
                             type="button"
@@ -1048,30 +1181,34 @@ export default function App() {
                               setWindSpeed(prev => Math.min(35, prev + 1));
                               triggerHaptic('click');
                             }}
-                            className="w-5 h-5 shrink-0 rounded-full border border-slate-700 dark:border-slate-800 hover:border-green-500 flex items-center justify-center text-slate-400 hover:text-green-400 bg-slate-900/50 active:scale-90 transition-all select-none cursor-pointer"
+                            className={`w-8 h-8 shrink-0 rounded-full border flex items-center justify-center text-slate-400 hover:text-green-400 active:scale-90 transition-all select-none cursor-pointer ${
+                              theme === 'dark' ? 'border-slate-800 bg-slate-900/50' : 'border-slate-200 bg-slate-100/50'
+                            }`}
                             title="Increase by 1 mph"
                           >
-                            <Plus className="h-2.5 w-2.5" />
+                            <Plus className="h-3 w-3" />
                           </button>
                         </div>
                       </div>
 
                       <div>
-                        <div className="flex justify-between text-[10px] mb-1 font-mono">
-                          <span className="opacity-70">Wind Angle</span>
-                          <span>{windAngle}°</span>
+                        <div className="flex justify-between text-[11px] mb-1 font-mono">
+                          <span className="opacity-70 font-semibold uppercase tracking-wider">Wind Angle</span>
+                          <span className="font-extrabold text-green-400">{windAngle}° <span className="opacity-60 font-normal">({getWindDirectionLabel(windAngle)})</span></span>
                         </div>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2.5">
                           <button
                             type="button"
                             onClick={() => {
                               setWindAngle(prev => Math.max(0, prev - 5));
                               triggerHaptic('click');
                             }}
-                            className="w-5 h-5 shrink-0 rounded-full border border-slate-700 dark:border-slate-800 hover:border-green-500 flex items-center justify-center text-slate-400 hover:text-green-400 bg-slate-900/50 active:scale-90 transition-all select-none cursor-pointer"
+                            className={`w-8 h-8 shrink-0 rounded-full border flex items-center justify-center text-slate-400 hover:text-green-400 active:scale-90 transition-all select-none cursor-pointer ${
+                              theme === 'dark' ? 'border-slate-800 bg-slate-900/50' : 'border-slate-200 bg-slate-100/50'
+                            }`}
                             title="Decrease by 5 degrees"
                           >
-                            <Minus className="h-2.5 w-2.5" />
+                            <Minus className="h-3 w-3" />
                           </button>
                           <input 
                             type="range"
@@ -1083,7 +1220,7 @@ export default function App() {
                               setWindAngle(Number(e.target.value));
                               if (Number(e.target.value) % 45 === 0) triggerHaptic('click');
                             }}
-                            className="flex-1 accent-green-500 h-1 rounded-lg"
+                            className="flex-1 accent-green-500 h-1.5 rounded-lg cursor-pointer bg-slate-800"
                           />
                           <button
                             type="button"
@@ -1091,10 +1228,12 @@ export default function App() {
                               setWindAngle(prev => Math.min(360, prev + 5));
                               triggerHaptic('click');
                             }}
-                            className="w-5 h-5 shrink-0 rounded-full border border-slate-700 dark:border-slate-800 hover:border-green-500 flex items-center justify-center text-slate-400 hover:text-green-400 bg-slate-900/50 active:scale-90 transition-all select-none cursor-pointer"
+                            className={`w-8 h-8 shrink-0 rounded-full border flex items-center justify-center text-slate-400 hover:text-green-400 active:scale-90 transition-all select-none cursor-pointer ${
+                              theme === 'dark' ? 'border-slate-800 bg-slate-900/50' : 'border-slate-200 bg-slate-100/50'
+                            }`}
                             title="Increase by 5 degrees"
                           >
-                            <Plus className="h-2.5 w-2.5" />
+                            <Plus className="h-3 w-3" />
                           </button>
                         </div>
                       </div>
@@ -1102,10 +1241,10 @@ export default function App() {
                   </div>
 
                   {/* Wind Direction feedback text */}
-                  <div className="flex justify-between text-[10px] font-mono opacity-50 mt-3 pt-3 border-t border-slate-800/40">
-                    <span>Angle 0° = Headwind</span>
-                    <span>90° = Right Cross</span>
-                    <span>180° = Tailwind</span>
+                  <div className="flex justify-between text-[10px] font-mono opacity-50 mt-4 pt-3 border-t border-slate-800/40">
+                    <span className="flex items-center gap-1"><span>0°</span> <span className="opacity-70">= Headwind</span></span>
+                    <span className="flex items-center gap-1"><span>90°</span> <span className="opacity-70">= Right Cross</span></span>
+                    <span className="flex items-center gap-1"><span>180°</span> <span className="opacity-70">= Tailwind</span></span>
                   </div>
                 </div>
 
