@@ -15,6 +15,7 @@ export function calculateAdjustments(params: {
   humidity: number; // percentage, default 50
   profile: UserProfile;
   clubs: Club[];
+  uphillLieSeverity?: 'None' | 'Green' | 'Yellow' | 'Red';
 }): ShotCalculation {
   const {
     targetDistance,
@@ -27,7 +28,8 @@ export function calculateAdjustments(params: {
     altitude = 0,
     humidity = 50,
     profile,
-    clubs
+    clubs,
+    uphillLieSeverity = 'None'
   } = params;
 
   // 1. Elevation Adjustment
@@ -44,12 +46,33 @@ export function calculateAdjustments(params: {
   // 2. Wind Vector breakdown
   // Wind angle 0 is direct headwind. 180 is direct tailwind.
   // 90 is crosswind from the right. 270 is crosswind from the left.
+
+  // Uphill Lies:
+  // Add 1 mph to the calculations for green slopes.
+  // Add 2 mph for yellow slopes.
+  // Add 5 mph for red slopes.
+  let baseWindSpeed = windSpeed;
+  if (uphillLieSeverity === 'Green') {
+    baseWindSpeed += 1;
+  } else if (uphillLieSeverity === 'Yellow') {
+    baseWindSpeed += 2;
+  } else if (uphillLieSeverity === 'Red') {
+    baseWindSpeed += 5;
+  }
+
+  // Diagonal/Quartering Winds:
+  // If the wind arrow is at a 45-degree angle. Multiply the wind speed by 0.75.
+  let effectiveWindSpeed = baseWindSpeed;
+  if (windAngle % 90 === 45) {
+    effectiveWindSpeed *= 0.75;
+  }
+
   const angleRad = (windAngle * Math.PI) / 180;
   const cosAngle = Math.cos(angleRad); // positive is headwind, negative is tailwind
   const sinAngle = Math.sin(angleRad); // positive is right-to-left, negative is left-to-right
 
-  const headwindComponent = windSpeed * cosAngle;
-  const crosswindComponent = windSpeed * sinAngle;
+  const headwindComponent = effectiveWindSpeed * cosAngle;
+  const crosswindComponent = effectiveWindSpeed * sinAngle;
 
   // Headwind increases effective distance (plays longer). Tailwind decreases it (plays shorter).
   // A standard 10mph headwind adds ~11.5 yards. Tailwind subtracts ~8 yards.
@@ -227,10 +250,23 @@ export function calculateAdjustments(params: {
   }
 
   // 9. Lateral Wind Drift & Tendency Adjustments
-  // Standard lateral drift: wind Speed * crosswind component * distance ratio
-  // E.g., at 150 yards, 10mph crosswind drifts the ball by ~12 yards.
-  // Higher lofted wedges drift even more! Driver drifts slightly less.
-  let lateralDrift = crosswindComponent * 1.1 * (targetDistance / 150);
+  // Use the baseline crosswind multipliers:
+  // Short Wedges (<100 Yards): Multiply wind mph by 0.5 
+  // Mid Irons (100–175 Yards): Multiply wind mph by 1.0 
+  // Long Irons & Hybrids (175–225 Yards): Multiply wind mph by 1.25.
+  // Woods & Drivers (>225 Yards): Multiply wind mph by 1.5.
+  let crosswindMultiplier = 1.0;
+  if (targetDistance < 100) {
+    crosswindMultiplier = 0.5;
+  } else if (targetDistance >= 100 && targetDistance <= 175) {
+    crosswindMultiplier = 1.0;
+  } else if (targetDistance > 175 && targetDistance <= 225) {
+    crosswindMultiplier = 1.25;
+  } else {
+    crosswindMultiplier = 1.5;
+  }
+
+  let lateralDrift = crosswindComponent * crosswindMultiplier;
 
   // Apply shot type drift modifiers
   if (shotType === 'Fade') {
@@ -263,6 +299,7 @@ export function calculateAdjustments(params: {
     playsLikeDistance: Math.round(effectiveDistance * 10) / 10,
     slopeAdjustment: Math.round(elevationAdjustment * 10) / 10,
     windDistanceAdjustment: Math.round(windDistanceAdjustment * 10) / 10,
-    liePenaltyFactor: Math.round((1 / lieMultiplier) * 100) / 100
+    liePenaltyFactor: Math.round((1 / lieMultiplier) * 100) / 100,
+    uphillLieSeverity
   };
 }

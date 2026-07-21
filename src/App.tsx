@@ -86,6 +86,7 @@ export default function App() {
   const [temperature, setTemperature] = useState<number>(70);
   const [altitude, setAltitude] = useState<number>(0);
   const [humidity, setHumidity] = useState<number>(50);
+  const [uphillLieSeverity, setUphillLieSeverity] = useState<'None' | 'Green' | 'Yellow' | 'Red'>('None');
 
   // Modal and edit states
   const [editingClub, setEditingClub] = useState<Club | null>(null);
@@ -207,6 +208,7 @@ export default function App() {
   const [practiceWindAngle, setPracticeWindAngle] = useState<number>(45);
   const [practiceLie, setPracticeLie] = useState<LieType>('Heavy Rough');
   const [practiceShot, setPracticeShot] = useState<ShotType>('Normal');
+  const [practiceUphillLieSeverity, setPracticeUphillLieSeverity] = useState<'None' | 'Green' | 'Yellow' | 'Red'>('None');
 
   // Load state from LocalStorage on mount
   useEffect(() => {
@@ -372,7 +374,8 @@ export default function App() {
       altitude,
       humidity,
       profile: activeProfile as UserProfile,
-      clubs
+      clubs,
+      uphillLieSeverity
     });
 
     setCurrentCalculation(result);
@@ -396,9 +399,10 @@ export default function App() {
       altitude: 0,
       humidity: 50,
       profile: activeProfile as UserProfile,
-      clubs
+      clubs,
+      uphillLieSeverity: practiceUphillLieSeverity
     });
-  }, [practiceDistance, practiceElevation, practiceWindSpeed, practiceWindAngle, practiceLie, practiceShot, clubs, activeProfile]);
+  }, [practiceDistance, practiceElevation, practiceWindSpeed, practiceWindAngle, practiceLie, practiceShot, clubs, activeProfile, practiceUphillLieSeverity]);
 
   // Live Calculator tab calculations (for tablet split screen view)
   const liveCalculation = useMemo(() => {
@@ -413,9 +417,10 @@ export default function App() {
       altitude,
       humidity,
       profile: activeProfile as UserProfile,
-      clubs
+      clubs,
+      uphillLieSeverity
     });
-  }, [targetDistance, elevation, windSpeed, windAngle, selectedLie, selectedShot, temperature, altitude, humidity, activeProfile, clubs]);
+  }, [targetDistance, elevation, windSpeed, windAngle, selectedLie, selectedShot, temperature, altitude, humidity, activeProfile, clubs, uphillLieSeverity]);
 
   // Favorite Quick Recall SITUATION helper
   const handleFavoriteRecall = (fav: ShotCalculation) => {
@@ -429,6 +434,7 @@ export default function App() {
     setTemperature(fav.temperature || 70);
     setAltitude(fav.altitude || 0);
     setHumidity(fav.humidity || 50);
+    setUphillLieSeverity(fav.uphillLieSeverity || 'None');
     
     // Instant calculate
     const result = calculateAdjustments({
@@ -442,7 +448,8 @@ export default function App() {
       altitude: fav.altitude || 0,
       humidity: fav.humidity || 50,
       profile: activeProfile as UserProfile,
-      clubs
+      clubs,
+      uphillLieSeverity: fav.uphillLieSeverity || 'None'
     });
 
     setCurrentCalculation(result);
@@ -1294,6 +1301,45 @@ export default function App() {
                   </div>
                 </div>
 
+                {/* UPHILL LIE SLOPE SELECTION */}
+                <div className={`p-3 rounded-2xl border ${
+                  theme === 'dark' ? 'bg-slate-900/50 border-slate-800/80' : 'bg-white border-slate-200'
+                }`}>
+                  <span className="text-[10px] text-slate-500 uppercase font-bold tracking-wider italic block mb-2">Uphill Lie Slope Severity</span>
+                  <div className="grid grid-cols-4 gap-1.5">
+                    {(['None', 'Green', 'Yellow', 'Red'] as const).map(severity => {
+                      const colors = {
+                        None: theme === 'dark' ? 'bg-slate-800/60 text-slate-400 border-slate-700/60' : 'bg-slate-100 text-slate-500 border-slate-200',
+                        Green: 'bg-green-500/20 text-green-400 border-green-500/30 hover:bg-green-500/35',
+                        Yellow: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30 hover:bg-yellow-500/35',
+                        Red: 'bg-red-500/20 text-red-400 border-red-500/30 hover:bg-red-500/35',
+                      };
+                      const activeColors = {
+                        None: theme === 'dark' ? 'bg-slate-700 text-slate-200 border-slate-600 ring-2 ring-slate-500/30' : 'bg-slate-200 text-slate-800 border-slate-300 ring-2 ring-slate-500/30',
+                        Green: 'bg-green-500 text-white border-green-500 shadow-md shadow-green-500/20 ring-2 ring-green-500/30',
+                        Yellow: 'bg-yellow-500 text-slate-950 border-yellow-500 shadow-md shadow-yellow-500/20 ring-2 ring-yellow-500/30',
+                        Red: 'bg-red-500 text-white border-red-500 shadow-md shadow-red-500/20 ring-2 ring-red-500/30',
+                      };
+                      const isActive = uphillLieSeverity === severity;
+                      return (
+                        <button
+                          key={severity}
+                          type="button"
+                          onClick={() => {
+                            setUphillLieSeverity(severity);
+                            triggerHaptic('click');
+                          }}
+                          className={`py-2 px-1 rounded-xl text-xs font-black border text-center transition-all cursor-pointer select-none ${
+                            isActive ? activeColors[severity] : colors[severity]
+                          }`}
+                        >
+                          {severity === 'None' ? 'Flat (0)' : severity === 'Green' ? 'Green (+1)' : severity === 'Yellow' ? 'Yellow (+2)' : 'Red (+5)'}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
                 {/* ADVANCED / EXPERT ACCORDION */}
                 <div className={`rounded-2xl border overflow-hidden ${
                   theme === 'dark' ? 'bg-slate-900/30 border-slate-800/60' : 'bg-slate-100/50 border-slate-200'
@@ -1755,6 +1801,45 @@ export default function App() {
                           <option key={shot} value={shot}>{shot}</option>
                         ))}
                       </select>
+                    </div>
+                  </div>
+
+                  {/* UPHILL LIE SLOPE SELECTION (PRACTICE) */}
+                  <div className={`p-3.5 rounded-2xl border ${
+                    theme === 'dark' ? 'bg-slate-900/30 border-slate-800/80' : 'bg-slate-100/50 border-slate-200'
+                  }`}>
+                    <span className="text-[10px] text-slate-500 uppercase font-bold tracking-wider italic block mb-2">Uphill Lie Slope Severity</span>
+                    <div className="grid grid-cols-4 gap-1.5">
+                      {(['None', 'Green', 'Yellow', 'Red'] as const).map(severity => {
+                        const colors = {
+                          None: theme === 'dark' ? 'bg-slate-800/60 text-slate-400 border-slate-700/60' : 'bg-slate-100 text-slate-500 border-slate-250',
+                          Green: 'bg-green-500/20 text-green-400 border-green-500/30 hover:bg-green-500/35',
+                          Yellow: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30 hover:bg-yellow-500/35',
+                          Red: 'bg-red-500/20 text-red-400 border-red-500/30 hover:bg-red-500/35',
+                        };
+                        const activeColors = {
+                          None: theme === 'dark' ? 'bg-slate-700 text-slate-200 border-slate-600 ring-2 ring-slate-500/30' : 'bg-slate-200 text-slate-800 border-slate-300 ring-2 ring-slate-500/30',
+                          Green: 'bg-green-500 text-white border-green-500 shadow-md shadow-green-500/20 ring-2 ring-green-500/30',
+                          Yellow: 'bg-yellow-500 text-slate-950 border-yellow-500 shadow-md shadow-yellow-500/20 ring-2 ring-yellow-500/30',
+                          Red: 'bg-red-500 text-white border-red-500 shadow-md shadow-red-500/20 ring-2 ring-red-500/30',
+                        };
+                        const isActive = practiceUphillLieSeverity === severity;
+                        return (
+                          <button
+                            key={severity}
+                            type="button"
+                            onClick={() => {
+                              setPracticeUphillLieSeverity(severity);
+                              triggerHaptic('click');
+                            }}
+                            className={`py-2 px-1 rounded-xl text-xs font-black border text-center transition-all cursor-pointer select-none ${
+                              isActive ? activeColors[severity] : colors[severity]
+                            }`}
+                          >
+                            {severity === 'None' ? 'Flat (0)' : severity === 'Green' ? 'Green (+1)' : severity === 'Yellow' ? 'Yellow (+2)' : 'Red (+5)'}
+                          </button>
+                        );
+                      })}
                     </div>
                   </div>
                 </div>

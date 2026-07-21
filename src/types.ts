@@ -66,4 +66,5 @@ export interface ShotCalculation {
   slopeAdjustment: number;
   windDistanceAdjustment: number;
   liePenaltyFactor: number;
+  uphillLieSeverity?: 'None' | 'Green' | 'Yellow' | 'Red';
 }
