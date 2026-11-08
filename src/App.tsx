@@ -87,7 +87,7 @@ export default function App() {
   const [altitude, setAltitude] = useState<number>(0);
   const [humidity, setHumidity] = useState<number>(50);
   const [uphillLieSeverity, setUphillLieSeverity] = useState<'None' | 'Green' | 'Yellow' | 'Red'>('None');
-
+  const [shotCategory, setShotCategory] = useState<'Auto' | 'Full/Tee' | 'Approach'>('Auto');
   // Modal and edit states
   const [editingClub, setEditingClub] = useState<Club | null>(null);
   const [isAddingClub, setIsAddingClub] = useState<boolean>(false);
@@ -234,6 +234,8 @@ export default function App() {
           elevationUnits: 'ft',
           favoriteShotTypes: ['Normal', 'Punch', 'Fade', 'Draw'],
           personalAdjustment: 100,
+          windHeadwindFullTeeCoef: 1.15,
+          windHeadwindApproachCoef: 1.25,
           customRules: defaultRules as any
         };
         currentProfiles = [defaultProfile];
@@ -324,6 +326,8 @@ export default function App() {
       elevationUnits: 'ft' as const,
       favoriteShotTypes: ['Normal' as const],
       personalAdjustment: 100,
+      windHeadwindFullTeeCoef: 1.15,
+      windHeadwindApproachCoef: 1.25,
       customRules: []
     };
   }, [profiles, activeProfileId]);
@@ -375,7 +379,8 @@ export default function App() {
       humidity,
       profile: activeProfile as UserProfile,
       clubs,
-      uphillLieSeverity
+      uphillLieSeverity,
+      shotCategory
     });
 
     setCurrentCalculation(result);
@@ -400,7 +405,8 @@ export default function App() {
       humidity: 50,
       profile: activeProfile as UserProfile,
       clubs,
-      uphillLieSeverity: practiceUphillLieSeverity
+      uphillLieSeverity: practiceUphillLieSeverity,
+      shotCategory: 'Auto'
     });
   }, [practiceDistance, practiceElevation, practiceWindSpeed, practiceWindAngle, practiceLie, practiceShot, clubs, activeProfile, practiceUphillLieSeverity]);
 
@@ -418,9 +424,10 @@ export default function App() {
       humidity,
       profile: activeProfile as UserProfile,
       clubs,
-      uphillLieSeverity
+      uphillLieSeverity,
+      shotCategory
     });
-  }, [targetDistance, elevation, windSpeed, windAngle, selectedLie, selectedShot, temperature, altitude, humidity, activeProfile, clubs, uphillLieSeverity]);
+  }, [targetDistance, elevation, windSpeed, windAngle, selectedLie, selectedShot, temperature, altitude, humidity, activeProfile, clubs, uphillLieSeverity, shotCategory]);
 
   // Favorite Quick Recall SITUATION helper
   const handleFavoriteRecall = (fav: ShotCalculation) => {
@@ -435,6 +442,11 @@ export default function App() {
     setAltitude(fav.altitude || 0);
     setHumidity(fav.humidity || 50);
     setUphillLieSeverity(fav.uphillLieSeverity || 'None');
+    if (fav.shotCategory === 'Full/Tee' || fav.shotCategory === 'Approach') {
+      setShotCategory(fav.shotCategory);
+    } else {
+      setShotCategory('Auto');
+    }
     
     // Instant calculate
     const result = calculateAdjustments({
@@ -449,7 +461,8 @@ export default function App() {
       humidity: fav.humidity || 50,
       profile: activeProfile as UserProfile,
       clubs,
-      uphillLieSeverity: fav.uphillLieSeverity || 'None'
+      uphillLieSeverity: fav.uphillLieSeverity || 'None',
+      shotCategory: (fav.shotCategory === 'Full/Tee' || fav.shotCategory === 'Approach') ? fav.shotCategory : 'Auto'
     });
 
     setCurrentCalculation(result);
@@ -1301,6 +1314,56 @@ export default function App() {
                   </div>
                 </div>
 
+                {/* SHOT CATEGORY & WIND PROFILE SELECTION */}
+                <div className={`p-3 rounded-2xl border ${
+                  theme === 'dark' ? 'bg-slate-900/50 border-slate-800/80' : 'bg-white border-slate-200'
+                }`}>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="text-[10px] text-slate-500 uppercase font-bold tracking-wider italic">Shot Category & Wind Profile</span>
+                    <span className="text-[9px] font-mono font-bold text-green-400">
+                      {liveCalculation.appliedHeadwindCoef ? `${liveCalculation.appliedHeadwindCoef.toFixed(2)}y/mph headwind rate` : ''}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-3 gap-1.5">
+                    {[
+                      { 
+                        key: 'Auto' as const, 
+                        label: 'Auto Detect', 
+                        sub: (selectedLie === 'Tee Box' || targetDistance >= 200) ? 'Full / Tee' : 'Approach' 
+                      },
+                      { 
+                        key: 'Full/Tee' as const, 
+                        label: 'Full / Tee', 
+                        sub: `${(activeProfile.windHeadwindFullTeeCoef ?? activeProfile.windHeadwindCoef ?? 1.15).toFixed(2)}y/mph` 
+                      },
+                      { 
+                        key: 'Approach' as const, 
+                        label: 'Approach', 
+                        sub: `${(activeProfile.windHeadwindApproachCoef ?? 1.25).toFixed(2)}y/mph` 
+                      }
+                    ].map(tab => (
+                      <button
+                        key={tab.key}
+                        type="button"
+                        onClick={() => {
+                          setShotCategory(tab.key);
+                          triggerHaptic('click');
+                        }}
+                        className={`py-2 px-1 rounded-xl text-center border transition-all cursor-pointer ${
+                          shotCategory === tab.key
+                            ? 'bg-green-500 text-slate-950 font-black border-green-500 shadow-md shadow-green-500/20 ring-2 ring-green-500/30'
+                            : theme === 'dark'
+                            ? 'bg-slate-900 border-slate-800 text-slate-300 hover:border-slate-700'
+                            : 'bg-slate-100 border-slate-200 text-slate-700 hover:border-slate-300'
+                        }`}
+                      >
+                        <span className="block text-[11px] font-bold leading-tight">{tab.label}</span>
+                        <span className={`block text-[8px] font-mono ${shotCategory === tab.key ? 'text-slate-950 font-bold' : 'text-slate-500'}`}>{tab.sub}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
                 {/* UPHILL LIE SLOPE SELECTION */}
                 <div className={`p-3 rounded-2xl border ${
                   theme === 'dark' ? 'bg-slate-900/50 border-slate-800/80' : 'bg-white border-slate-200'
@@ -1529,11 +1592,18 @@ export default function App() {
                           {liveCalculation.slopeAdjustment > 0 ? `+${liveCalculation.slopeAdjustment.toFixed(1)}y` : liveCalculation.slopeAdjustment < 0 ? `${liveCalculation.slopeAdjustment.toFixed(1)}y` : '0.0y'}
                         </span>
                       </div>
-                      <div className="flex justify-between">
+                      <div className="flex justify-between items-center">
                         <span className="text-slate-500">Wind Adjustment:</span>
-                        <span className={liveCalculation.windDistanceAdjustment > 0 ? 'text-rose-400' : liveCalculation.windDistanceAdjustment < 0 ? 'text-green-400' : 'text-slate-300'}>
-                          {liveCalculation.windDistanceAdjustment > 0 ? `+${liveCalculation.windDistanceAdjustment.toFixed(1)}y` : liveCalculation.windDistanceAdjustment < 0 ? `${liveCalculation.windDistanceAdjustment.toFixed(1)}y` : '0.0y'}
-                        </span>
+                        <div className="flex items-center gap-1.5">
+                          {liveCalculation.windDistanceAdjustment !== 0 && (
+                            <span className="text-[9px] text-slate-500 font-sans">
+                              ({liveCalculation.shotCategory === 'Full/Tee' ? 'Full/Tee' : liveCalculation.shotCategory === 'Approach' ? 'Approach' : 'Short'} @ {liveCalculation.appliedHeadwindCoef?.toFixed(2)}y/mph)
+                            </span>
+                          )}
+                          <span className={liveCalculation.windDistanceAdjustment > 0 ? 'text-rose-400 font-bold' : liveCalculation.windDistanceAdjustment < 0 ? 'text-green-400 font-bold' : 'text-slate-300'}>
+                            {liveCalculation.windDistanceAdjustment > 0 ? `+${liveCalculation.windDistanceAdjustment.toFixed(1)}y` : liveCalculation.windDistanceAdjustment < 0 ? `${liveCalculation.windDistanceAdjustment.toFixed(1)}y` : '0.0y'}
+                          </span>
+                        </div>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-slate-500">Lie Penalty:</span>
@@ -2637,6 +2707,17 @@ export default function App() {
                 </div>
               </div>
 
+              {/* Active Headwind Calibration Info Banner */}
+              <div className="flex items-center justify-between text-[10px] font-mono px-3.5 py-2.5 rounded-2xl bg-slate-900/40 border border-slate-800 mb-4 text-slate-300">
+                <div className="flex items-center gap-1.5">
+                  <Wind className="h-3.5 w-3.5 text-green-400" />
+                  <span>Wind Profile: <strong className="text-white">{currentCalculation.shotCategory === 'Full/Tee' ? 'Full / Tee Shot' : currentCalculation.shotCategory === 'Approach' ? 'Approach Shot' : 'Short Shot'}</strong></span>
+                </div>
+                <span className="text-green-400 font-bold">
+                  {currentCalculation.appliedHeadwindCoef ? `${currentCalculation.appliedHeadwindCoef.toFixed(2)}y / mph` : ''}
+                </span>
+              </div>
+
               <div className="space-y-2">
                 <div className="flex gap-2">
                   <button
@@ -2857,19 +2938,19 @@ export default function App() {
                     <span className="text-[9px] text-slate-500 font-mono">Real-time update</span>
                   </div>
 
-                  {/* Headwind factor */}
+                  {/* Headwind Penalty Factor Full Shots/Tee Shots */}
                   <div className="space-y-1.5">
                     <div className="flex justify-between items-center text-xs">
-                      <span className="font-medium text-slate-300">Headwind Penalty Factor</span>
-                      <span className="font-mono text-green-400 font-bold">{(activeProfile.windHeadwindCoef ?? 1.15).toFixed(2)}y / mph</span>
+                      <span className="font-medium text-slate-300">Headwind Penalty Factor Full Shots/Tee Shots</span>
+                      <span className="font-mono text-green-400 font-bold">{(activeProfile.windHeadwindFullTeeCoef ?? activeProfile.windHeadwindCoef ?? 1.15).toFixed(2)}y / mph</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <button
                         type="button"
                         onClick={() => {
-                          const current = activeProfile.windHeadwindCoef ?? 1.15;
+                          const current = activeProfile.windHeadwindFullTeeCoef ?? activeProfile.windHeadwindCoef ?? 1.15;
                           const nextVal = Math.max(0.50, Math.round((current - 0.05) * 100) / 100);
-                          updateProfileCalibrations({ windHeadwindCoef: nextVal });
+                          updateProfileCalibrations({ windHeadwindFullTeeCoef: nextVal });
                           triggerHaptic('click');
                         }}
                         className="w-7 h-7 shrink-0 rounded-full border border-slate-800 hover:border-green-500 flex items-center justify-center text-slate-400 hover:text-green-400 bg-slate-900/40 active:scale-90 transition-all select-none cursor-pointer"
@@ -2882,9 +2963,9 @@ export default function App() {
                         min={0.50}
                         max={2.50}
                         step={0.05}
-                        value={activeProfile.windHeadwindCoef ?? 1.15}
+                        value={activeProfile.windHeadwindFullTeeCoef ?? activeProfile.windHeadwindCoef ?? 1.15}
                         onChange={(e) => {
-                          updateProfileCalibrations({ windHeadwindCoef: Number(e.target.value) });
+                          updateProfileCalibrations({ windHeadwindFullTeeCoef: Number(e.target.value) });
                           triggerHaptic('click');
                         }}
                         className="flex-1 accent-green-500 h-1.5 rounded cursor-pointer"
@@ -2892,9 +2973,9 @@ export default function App() {
                       <button
                         type="button"
                         onClick={() => {
-                          const current = activeProfile.windHeadwindCoef ?? 1.15;
+                          const current = activeProfile.windHeadwindFullTeeCoef ?? activeProfile.windHeadwindCoef ?? 1.15;
                           const nextVal = Math.min(2.50, Math.round((current + 0.05) * 100) / 100);
-                          updateProfileCalibrations({ windHeadwindCoef: nextVal });
+                          updateProfileCalibrations({ windHeadwindFullTeeCoef: nextVal });
                           triggerHaptic('click');
                         }}
                         className="w-7 h-7 shrink-0 rounded-full border border-slate-800 hover:border-green-500 flex items-center justify-center text-slate-400 hover:text-green-400 bg-slate-900/40 active:scale-90 transition-all select-none cursor-pointer"
@@ -2903,7 +2984,56 @@ export default function App() {
                         <Plus className="h-3 w-3" />
                       </button>
                     </div>
-                    <span className="text-[9px] text-slate-500 block leading-tight">Yards added to effective distance per 1 mph of pure headwind. Standard is 1.15.</span>
+                    <span className="text-[9px] text-slate-500 block leading-tight">Yards added to effective distance per 1 mph of headwind on full drives and tee shots. Standard is 1.15.</span>
+                  </div>
+
+                  {/* Headwind Penalty Factor Approach Shots */}
+                  <div className="space-y-1.5">
+                    <div className="flex justify-between items-center text-xs">
+                      <span className="font-medium text-slate-300">Headwind Penalty Factor Approach Shots</span>
+                      <span className="font-mono text-green-400 font-bold">{(activeProfile.windHeadwindApproachCoef ?? 1.25).toFixed(2)}y / mph</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const current = activeProfile.windHeadwindApproachCoef ?? 1.25;
+                          const nextVal = Math.max(0.50, Math.round((current - 0.05) * 100) / 100);
+                          updateProfileCalibrations({ windHeadwindApproachCoef: nextVal });
+                          triggerHaptic('click');
+                        }}
+                        className="w-7 h-7 shrink-0 rounded-full border border-slate-800 hover:border-green-500 flex items-center justify-center text-slate-400 hover:text-green-400 bg-slate-900/40 active:scale-90 transition-all select-none cursor-pointer"
+                        title="Decrease by 0.05"
+                      >
+                        <Minus className="h-3 w-3" />
+                      </button>
+                      <input
+                        type="range"
+                        min={0.50}
+                        max={2.50}
+                        step={0.05}
+                        value={activeProfile.windHeadwindApproachCoef ?? 1.25}
+                        onChange={(e) => {
+                          updateProfileCalibrations({ windHeadwindApproachCoef: Number(e.target.value) });
+                          triggerHaptic('click');
+                        }}
+                        className="flex-1 accent-green-500 h-1.5 rounded cursor-pointer"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const current = activeProfile.windHeadwindApproachCoef ?? 1.25;
+                          const nextVal = Math.min(2.50, Math.round((current + 0.05) * 100) / 100);
+                          updateProfileCalibrations({ windHeadwindApproachCoef: nextVal });
+                          triggerHaptic('click');
+                        }}
+                        className="w-7 h-7 shrink-0 rounded-full border border-slate-800 hover:border-green-500 flex items-center justify-center text-slate-400 hover:text-green-400 bg-slate-900/40 active:scale-90 transition-all select-none cursor-pointer"
+                        title="Increase by 0.05"
+                      >
+                        <Plus className="h-3 w-3" />
+                      </button>
+                    </div>
+                    <span className="text-[9px] text-slate-500 block leading-tight">Yards added to effective distance per 1 mph of headwind on approach shots into the green. Standard is 1.25.</span>
                   </div>
 
                   {/* Tailwind factor */}
@@ -3158,6 +3288,8 @@ export default function App() {
                     type="button"
                     onClick={() => {
                       updateProfileCalibrations({
+                        windHeadwindFullTeeCoef: undefined,
+                        windHeadwindApproachCoef: undefined,
                         windHeadwindCoef: undefined,
                         windTailwindCoef: undefined,
                         windHeadwindCoefShort: undefined,
@@ -3209,24 +3341,34 @@ Crosswind = WindSpeed * SinAngle`}
                     <div className="space-y-1">
                       <h4 className="font-bold text-slate-200 uppercase text-[10px] tracking-wide text-green-500">2. Wind Distance Correction</h4>
                       <p>
-                        Pure wind resistance plays non-linearly. For shots between 50 and 100 yards, we use specialized short-range multipliers. Otherwise, we use standard multipliers:
+                        Pure wind resistance acts non-linearly. Full shots/tee shots have lower spin and a penetrating trajectory, whereas approach shots balloon due to higher backspin. For shots between 50 and 100 yards, specialized short-range multipliers are used:
                       </p>
                       <pre className="p-2.5 rounded-lg bg-slate-900/60 text-[9.5px] font-mono text-slate-300 leading-normal border border-slate-800 overflow-x-auto">
 {`const isShortShot = TargetDistance >= 50 && TargetDistance <= 100;
-const headwindCoef = isShortShot ? HeadwindPenaltyFactorShort : HeadwindPenaltyFactor;
+const isFullOrTee = LieType === 'Tee Box' || TargetDistance >= 200;
+
+// Resolve headwind coefficient based on shot type:
+let headwindCoef = isFullOrTee 
+  ? HeadwindPenaltyFactorFullTee 
+  : HeadwindPenaltyFactorApproach;
+
+if (isShortShot && HeadwindPenaltyFactorShort) {
+  headwindCoef = HeadwindPenaltyFactorShort;
+}
+
 const tailwindCoef = isShortShot ? TailwindBoostFactorShort : TailwindBoostFactor;
 
 if (Headwind > 0) {
   // Headwind increases Effective Distance
-  WindAdjustment = Headwind * headwindCoef
+  WindAdjustment = Headwind * headwindCoef;
 } else {
   // Tailwind decreases Effective Distance
-  WindAdjustment = Headwind * tailwindCoef
+  WindAdjustment = Headwind * tailwindCoef;
 }
 
 // Special case: Knockdown shots reduce wind effect by 40%
 if (ShotType === "Knockdown") {
-  WindAdjustment = WindAdjustment * 0.60
+  WindAdjustment = WindAdjustment * 0.60;
 }`}
                       </pre>
                     </div>

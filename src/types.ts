@@ -34,7 +34,9 @@ export interface UserProfile {
   favoriteShotTypes: ShotType[];
   personalAdjustment: number; // percentage (e.g. 100 for default)
   customRules: CustomRule[];
-  windHeadwindCoef?: number;
+  windHeadwindFullTeeCoef?: number; // Headwind Penalty Factor Full Shots/Tee Shots
+  windHeadwindApproachCoef?: number; // Headwind Penalty Factor Approach Shots
+  windHeadwindCoef?: number; // legacy single factor fallback
   windTailwindCoef?: number;
   windHeadwindCoefShort?: number;
   windTailwindCoefShort?: number;
@@ -67,4 +69,6 @@ export interface ShotCalculation {
   windDistanceAdjustment: number;
   liePenaltyFactor: number;
   uphillLieSeverity?: 'None' | 'Green' | 'Yellow' | 'Red';
+  shotCategory?: 'Full/Tee' | 'Approach' | 'Short';
+  appliedHeadwindCoef?: number;
 }

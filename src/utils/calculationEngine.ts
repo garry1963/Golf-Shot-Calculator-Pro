@@ -10,12 +10,13 @@ export function calculateAdjustments(params: {
   windAngle: number; // 0 - 360 degrees
   lieType: LieType;
   shotType: ShotType;
-  temperature: number; // Fahrenheit, default 70
-  altitude: number; // feet, default 0
-  humidity: number; // percentage, default 50
+  temperature?: number; // Fahrenheit, default 70
+  altitude?: number; // feet, default 0
+  humidity?: number; // percentage, default 50
   profile: UserProfile;
   clubs: Club[];
   uphillLieSeverity?: 'None' | 'Green' | 'Yellow' | 'Red';
+  shotCategory?: 'Auto' | 'Full/Tee' | 'Approach';
 }): ShotCalculation {
   const {
     targetDistance,
@@ -29,7 +30,8 @@ export function calculateAdjustments(params: {
     humidity = 50,
     profile,
     clubs,
-    uphillLieSeverity = 'None'
+    uphillLieSeverity = 'None',
+    shotCategory = 'Auto'
   } = params;
 
   // 1. Elevation Adjustment
@@ -75,12 +77,38 @@ export function calculateAdjustments(params: {
   const crosswindComponent = effectiveWindSpeed * sinAngle;
 
   // Headwind increases effective distance (plays longer). Tailwind decreases it (plays shorter).
-  // A standard 10mph headwind adds ~11.5 yards. Tailwind subtracts ~8 yards.
-  // For short shots (50 to 100 yards), we use dedicated shorter-distance coefficients.
+  // - Full Shots / Tee Shots: Lower trajectory and penetrating flight (standard 1.15 y/mph)
+  // - Approach Shots: Higher backspin and steeper climb causes ball to balloon in headwind (standard 1.25 y/mph)
+  // - Short Shots (50 to 100 yards): Dedicated short-range multiplier (standard 0.70 y/mph)
   const isShortShot = targetDistance >= 50 && targetDistance <= 100;
-  const headwindCoef = isShortShot
-    ? (profile?.windHeadwindCoefShort ?? 0.70)
-    : (profile?.windHeadwindCoef ?? 1.15);
+  const isTeeShot = lieType === 'Tee Box';
+  const isFullOrTee = isTeeShot || targetDistance >= 200;
+
+  const fullTeeHeadwindCoef = profile?.windHeadwindFullTeeCoef ?? profile?.windHeadwindCoef ?? 1.15;
+  const approachHeadwindCoef = profile?.windHeadwindApproachCoef ?? 1.25;
+
+  let resolvedCategory: 'Full/Tee' | 'Approach' | 'Short';
+  if (shotCategory === 'Full/Tee') {
+    resolvedCategory = 'Full/Tee';
+  } else if (shotCategory === 'Approach') {
+    resolvedCategory = 'Approach';
+  } else if (isShortShot && profile?.windHeadwindCoefShort !== undefined && profile?.windHeadwindCoefShort !== null) {
+    resolvedCategory = 'Short';
+  } else if (isFullOrTee) {
+    resolvedCategory = 'Full/Tee';
+  } else {
+    resolvedCategory = 'Approach';
+  }
+
+  let headwindCoef = fullTeeHeadwindCoef;
+  if (resolvedCategory === 'Short') {
+    headwindCoef = profile?.windHeadwindCoefShort ?? 0.70;
+  } else if (resolvedCategory === 'Approach') {
+    headwindCoef = approachHeadwindCoef;
+  } else {
+    headwindCoef = fullTeeHeadwindCoef;
+  }
+
   const tailwindCoef = isShortShot
     ? (profile?.windTailwindCoefShort ?? 0.50)
     : (profile?.windTailwindCoef ?? 0.80);
@@ -300,6 +328,8 @@ export function calculateAdjustments(params: {
     slopeAdjustment: Math.round(elevationAdjustment * 10) / 10,
     windDistanceAdjustment: Math.round(windDistanceAdjustment * 10) / 10,
     liePenaltyFactor: Math.round((1 / lieMultiplier) * 100) / 100,
-    uphillLieSeverity
+    uphillLieSeverity,
+    shotCategory: resolvedCategory,
+    appliedHeadwindCoef: Math.round(headwindCoef * 100) / 100
   };
 }
