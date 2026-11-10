@@ -17,6 +17,7 @@ export function calculateAdjustments(params: {
   clubs: Club[];
   uphillLieSeverity?: 'None' | 'Green' | 'Yellow' | 'Red';
   shotCategory?: 'Auto' | 'Full/Tee' | 'Approach';
+  allowRollout?: boolean;
 }): ShotCalculation {
   const {
     targetDistance,
@@ -31,7 +32,8 @@ export function calculateAdjustments(params: {
     profile,
     clubs,
     uphillLieSeverity = 'None',
-    shotCategory = 'Auto'
+    shotCategory = 'Auto',
+    allowRollout = profile?.allowRollout ?? true
   } = params;
 
   // 1. Elevation Adjustment
@@ -201,15 +203,104 @@ export function calculateAdjustments(params: {
       shotMultiplier = 1.0;
   }
 
-  // 6. User Profile Adjustment (Personal strength adjustment)
+  // 6. Rollout Modifiers based on lie and shot type
+  let rolloutLieMultiplier = 1.0;
+  switch (lieType) {
+    case 'Fairway':
+    case 'Tee Box':
+      rolloutLieMultiplier = 1.0;
+      break;
+    case 'First Cut':
+      rolloutLieMultiplier = 0.85;
+      break;
+    case 'Heavy Rough':
+      rolloutLieMultiplier = 0.65;
+      break;
+    case 'Deep Rough':
+      rolloutLieMultiplier = 0.40;
+      break;
+    case 'Sand':
+      rolloutLieMultiplier = 0.35;
+      break;
+    default:
+      rolloutLieMultiplier = 1.0;
+  }
+
+  let rolloutShotMultiplier = 1.0;
+  switch (shotType) {
+    case 'Normal':
+      rolloutShotMultiplier = 1.0;
+      break;
+    case 'Punch':
+      rolloutShotMultiplier = 1.5; // punch carries less, rolls more
+      break;
+    case 'Pitch':
+      rolloutShotMultiplier = 0.8;
+      break;
+    case 'Chip':
+      rolloutShotMultiplier = 1.4; // chips roll out
+      break;
+    case 'Flop':
+      rolloutShotMultiplier = 0.2; // flop stops dead
+      break;
+    case 'Fade':
+      rolloutShotMultiplier = 0.8; // fades land soft
+      break;
+    case 'Draw':
+      rolloutShotMultiplier = 1.2; // draws roll further
+      break;
+    case 'Knockdown':
+      rolloutShotMultiplier = 1.25;
+      break;
+    default:
+      rolloutShotMultiplier = 1.0;
+  }
+
+  // 7. User Profile Adjustment (Personal strength adjustment)
   const personalFactor = (profile.personalAdjustment || 100) / 100;
+  const userRolloutMultiplier = profile?.rolloutMultiplier ?? 1.0;
 
-  // Adjusted Carry required
-  // Apply lie and shot multiplier to find how much actual output is needed
-  // If the rough reduces carry by 10%, we need to swing harder or use more club, playing like effective distance is divided by lieMultiplier
-  let adjustedCarry = effectiveDistance / (lieMultiplier * shotMultiplier * personalFactor);
+  // 8. Find recommended Club and Power (factoring in club ball rollout)
+  let recommendedClub = 'None';
+  let recommendedPower = 100;
+  let bestClub: Club | null = null;
+  let expectedRollout = 0;
 
-  // 7. Custom Rules Evaluation
+  if (clubs.length > 0) {
+    // Sort clubs by carry distance descending
+    const sortedClubs = [...clubs].sort((a, b) => b.carry - a.carry);
+    bestClub = sortedClubs[sortedClubs.length - 1]; // Default to shortest club
+
+    for (let i = sortedClubs.length - 1; i >= 0; i--) {
+      const club = sortedClubs[i];
+      const nominalRoll = Math.max(0, club.total - club.carry);
+      const effectiveClubRoll = allowRollout
+        ? nominalRoll * rolloutLieMultiplier * rolloutShotMultiplier * userRolloutMultiplier
+        : 0;
+      const effectiveFullTotal = (club.carry * lieMultiplier * shotMultiplier * personalFactor) + effectiveClubRoll;
+
+      if (effectiveFullTotal >= effectiveDistance) {
+        bestClub = club;
+        break;
+      }
+      if (i === 0) {
+        bestClub = sortedClubs[0];
+      }
+    }
+
+    recommendedClub = bestClub.name;
+    const nominalRoll = Math.max(0, bestClub.total - bestClub.carry);
+    expectedRollout = allowRollout
+      ? Math.round(nominalRoll * rolloutLieMultiplier * rolloutShotMultiplier * userRolloutMultiplier * 10) / 10
+      : 0;
+  }
+
+  // 9. Calculate Adjusted Carry required
+  // When allowing for rollout, the required carry is reduced by expected rollout so the ball rolls to the target pin!
+  const requiredCarryDistance = Math.max(0, effectiveDistance - expectedRollout);
+  let adjustedCarry = requiredCarryDistance / (lieMultiplier * shotMultiplier * personalFactor);
+
+  // 10. Custom Rules Evaluation
   if (profile.customRules && profile.customRules.length > 0) {
     profile.customRules.forEach((rule: CustomRule) => {
       if (!rule.active) return;
@@ -245,37 +336,13 @@ export function calculateAdjustments(params: {
     });
   }
 
-  // 8. Find recommended Club and Power
-  // We want to find a club in the inventory whose carry distance is closest to adjustedCarry
-  let recommendedClub = 'None';
-  let recommendedPower = 100;
-
-  if (clubs.length > 0) {
-    // Sort clubs by carry distance descending
-    const sortedClubs = [...clubs].sort((a, b) => b.carry - a.carry);
-    
-    // Find first club whose carry is greater than or equal to adjustedCarry
-    // If adjustedCarry is greater than our longest club (Driver), select Driver at 100% (or more if custom)
-    let bestClub = sortedClubs[sortedClubs.length - 1]; // Default to shortest club
-    
-    for (let i = sortedClubs.length - 1; i >= 0; i--) {
-      const club = sortedClubs[i];
-      if (club.carry >= adjustedCarry) {
-        bestClub = club;
-        break;
-      }
-      // If we are already past the longest club, the longest club is best
-      if (i === 0) {
-        bestClub = sortedClubs[0];
-      }
-    }
-
-    recommendedClub = bestClub.name;
-    // Power percentage = (adjustedCarry / club's default carry) * 100
-    // Cap recommended power between 50% and 100% (or let it go up to 105% if they overslape, but let's cap at 105%)
+  // Calculate power percentage for the selected club
+  if (bestClub) {
     let powerPct = Math.round((adjustedCarry / bestClub.carry) * 100);
     recommendedPower = Math.max(40, Math.min(105, powerPct));
   }
+
+  const projectedTotal = Math.round(((adjustedCarry * lieMultiplier * shotMultiplier * personalFactor) + expectedRollout) * 10) / 10;
 
   // 9. Lateral Wind Drift & Tendency Adjustments
   // Use the baseline crosswind multipliers:
@@ -320,6 +387,9 @@ export function calculateAdjustments(params: {
     humidity,
     effectiveDistance: Math.round(effectiveDistance * 10) / 10,
     adjustedCarry: Math.round(adjustedCarry * 10) / 10,
+    expectedRollout: Math.round(expectedRollout * 10) / 10,
+    projectedTotal: Math.round(projectedTotal * 10) / 10,
+    allowRollout,
     recommendedClub,
     recommendedPower,
     lateralDrift: Math.round(lateralDrift * 10) / 10,

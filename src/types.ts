@@ -34,6 +34,8 @@ export interface UserProfile {
   favoriteShotTypes: ShotType[];
   personalAdjustment: number; // percentage (e.g. 100 for default)
   customRules: CustomRule[];
+  allowRollout?: boolean; // Factor in club ball rollout for carry and club recommendation
+  rolloutMultiplier?: number; // Firmness/rollout calibration multiplier (default 1.0)
   windHeadwindFullTeeCoef?: number; // Headwind Penalty Factor Full Shots/Tee Shots
   windHeadwindApproachCoef?: number; // Headwind Penalty Factor Approach Shots
   windHeadwindCoef?: number; // legacy single factor fallback
@@ -60,6 +62,9 @@ export interface ShotCalculation {
   // Calculated outputs
   effectiveDistance: number;
   adjustedCarry: number;
+  expectedRollout?: number; // expected roll yards based on club and conditions
+  projectedTotal?: number; // adjusted carry + expected rollout
+  allowRollout?: boolean; // whether rollout allowance was active
   recommendedClub: string;
   recommendedPower: number; // percentage
   lateralDrift: number; // yards left or right

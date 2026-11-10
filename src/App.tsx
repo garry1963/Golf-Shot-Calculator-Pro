@@ -88,6 +88,7 @@ export default function App() {
   const [humidity, setHumidity] = useState<number>(50);
   const [uphillLieSeverity, setUphillLieSeverity] = useState<'None' | 'Green' | 'Yellow' | 'Red'>('None');
   const [shotCategory, setShotCategory] = useState<'Auto' | 'Full/Tee' | 'Approach'>('Auto');
+  const [allowRollout, setAllowRollout] = useState<boolean>(true);
   // Modal and edit states
   const [editingClub, setEditingClub] = useState<Club | null>(null);
   const [isAddingClub, setIsAddingClub] = useState<boolean>(false);
@@ -236,6 +237,8 @@ export default function App() {
           personalAdjustment: 100,
           windHeadwindFullTeeCoef: 1.15,
           windHeadwindApproachCoef: 1.25,
+          allowRollout: true,
+          rolloutMultiplier: 1.0,
           customRules: defaultRules as any
         };
         currentProfiles = [defaultProfile];
@@ -273,7 +276,10 @@ export default function App() {
             altitude: 500,
             humidity: 45,
             effectiveDistance: 178.8,
-            adjustedCarry: 178.8,
+            adjustedCarry: 170.8,
+            expectedRollout: 8.0,
+            projectedTotal: 178.8,
+            allowRollout: true,
             recommendedClub: '5-Iron',
             recommendedPower: 102,
             lateralDrift: 0,
@@ -296,7 +302,10 @@ export default function App() {
             altitude: 0,
             humidity: 60,
             effectiveDistance: 142.8,
-            adjustedCarry: 176.3,
+            adjustedCarry: 168.3,
+            expectedRollout: 8.0,
+            projectedTotal: 142.8,
+            allowRollout: true,
             recommendedClub: '6-Iron',
             recommendedPower: 105,
             lateralDrift: 8.5,
@@ -328,9 +337,17 @@ export default function App() {
       personalAdjustment: 100,
       windHeadwindFullTeeCoef: 1.15,
       windHeadwindApproachCoef: 1.25,
+      allowRollout: true,
+      rolloutMultiplier: 1.0,
       customRules: []
     };
   }, [profiles, activeProfileId]);
+
+  useEffect(() => {
+    if (activeProfile?.allowRollout !== undefined) {
+      setAllowRollout(activeProfile.allowRollout);
+    }
+  }, [activeProfile?.allowRollout]);
 
   const saveClubsToStorage = (updatedClubs: Club[]) => {
     setClubs(updatedClubs);
@@ -380,7 +397,8 @@ export default function App() {
       profile: activeProfile as UserProfile,
       clubs,
       uphillLieSeverity,
-      shotCategory
+      shotCategory,
+      allowRollout
     });
 
     setCurrentCalculation(result);
@@ -406,9 +424,10 @@ export default function App() {
       profile: activeProfile as UserProfile,
       clubs,
       uphillLieSeverity: practiceUphillLieSeverity,
-      shotCategory: 'Auto'
+      shotCategory: 'Auto',
+      allowRollout
     });
-  }, [practiceDistance, practiceElevation, practiceWindSpeed, practiceWindAngle, practiceLie, practiceShot, clubs, activeProfile, practiceUphillLieSeverity]);
+  }, [practiceDistance, practiceElevation, practiceWindSpeed, practiceWindAngle, practiceLie, practiceShot, clubs, activeProfile, practiceUphillLieSeverity, allowRollout]);
 
   // Live Calculator tab calculations (for tablet split screen view)
   const liveCalculation = useMemo(() => {
@@ -425,9 +444,10 @@ export default function App() {
       profile: activeProfile as UserProfile,
       clubs,
       uphillLieSeverity,
-      shotCategory
+      shotCategory,
+      allowRollout
     });
-  }, [targetDistance, elevation, windSpeed, windAngle, selectedLie, selectedShot, temperature, altitude, humidity, activeProfile, clubs, uphillLieSeverity, shotCategory]);
+  }, [targetDistance, elevation, windSpeed, windAngle, selectedLie, selectedShot, temperature, altitude, humidity, activeProfile, clubs, uphillLieSeverity, shotCategory, allowRollout]);
 
   // Favorite Quick Recall SITUATION helper
   const handleFavoriteRecall = (fav: ShotCalculation) => {
@@ -447,6 +467,9 @@ export default function App() {
     } else {
       setShotCategory('Auto');
     }
+    if (fav.allowRollout !== undefined) {
+      setAllowRollout(fav.allowRollout);
+    }
     
     // Instant calculate
     const result = calculateAdjustments({
@@ -462,7 +485,8 @@ export default function App() {
       profile: activeProfile as UserProfile,
       clubs,
       uphillLieSeverity: fav.uphillLieSeverity || 'None',
-      shotCategory: (fav.shotCategory === 'Full/Tee' || fav.shotCategory === 'Approach') ? fav.shotCategory : 'Auto'
+      shotCategory: (fav.shotCategory === 'Full/Tee' || fav.shotCategory === 'Approach') ? fav.shotCategory : 'Auto',
+      allowRollout: fav.allowRollout !== undefined ? fav.allowRollout : allowRollout
     });
 
     setCurrentCalculation(result);
@@ -1364,6 +1388,53 @@ export default function App() {
                   </div>
                 </div>
 
+                {/* CLUB BALL ROLLOUT ALLOWANCE CARD */}
+                <div className={`p-3 rounded-2xl border ${
+                  theme === 'dark' ? 'bg-slate-900/50 border-slate-800/80' : 'bg-white border-slate-200'
+                }`}>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="text-[10px] text-slate-500 uppercase font-bold tracking-wider italic">Club Ball Rollout Allowance</span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const nextVal = !allowRollout;
+                        setAllowRollout(nextVal);
+                        updateProfileCalibrations({ allowRollout: nextVal });
+                        triggerHaptic('click');
+                      }}
+                      className={`px-2.5 py-0.5 rounded-full text-[9px] font-mono font-bold transition-all cursor-pointer ${
+                        allowRollout
+                          ? 'bg-green-500/20 text-green-400 border border-green-500/40'
+                          : 'bg-slate-800 text-slate-400 border border-slate-700'
+                      }`}
+                    >
+                      {allowRollout ? 'ROLLOUT: ACTIVE' : 'ROLLOUT: OFF'}
+                    </button>
+                  </div>
+                  <div className="flex items-center justify-between text-xs pt-1">
+                    <div className="flex flex-col">
+                      <span className="text-[11px] font-bold text-slate-200">
+                        {allowRollout 
+                          ? `${liveCalculation.recommendedClub} Rollout: +${liveCalculation.expectedRollout.toFixed(1)}y`
+                          : 'Direct Carry Mode (Zero Rollout)'}
+                      </span>
+                      <span className="text-[9px] text-slate-500">
+                        {allowRollout
+                          ? `Fly ${liveCalculation.adjustedCarry.toFixed(1)}y carry → rolls out to ${liveCalculation.projectedTotal.toFixed(1)}y target pin`
+                          : `Targets ${liveCalculation.adjustedCarry.toFixed(1)}y carry directly without roll`}
+                      </span>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-[11px] font-mono font-bold text-green-400 block">
+                        {allowRollout ? `-${liveCalculation.expectedRollout.toFixed(1)}y` : '0.0y'}
+                      </span>
+                      <span className="text-[8px] text-slate-500 font-mono">
+                        {allowRollout ? 'Carry offset' : 'No offset'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
                 {/* UPHILL LIE SLOPE SELECTION */}
                 <div className={`p-3 rounded-2xl border ${
                   theme === 'dark' ? 'bg-slate-900/50 border-slate-800/80' : 'bg-white border-slate-200'
@@ -1611,6 +1682,27 @@ export default function App() {
                           {liveCalculation.liePenaltyFactor > 1 ? `x${liveCalculation.liePenaltyFactor.toFixed(2)}` : 'None'}
                         </span>
                       </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-slate-500">Club Rollout Allowance:</span>
+                        <div className="flex items-center gap-1.5">
+                          {liveCalculation.allowRollout ? (
+                            <>
+                              <span className="text-[9px] text-slate-500 font-sans">({liveCalculation.recommendedClub})</span>
+                              <span className="text-amber-400 font-bold">-{liveCalculation.expectedRollout.toFixed(1)}y</span>
+                            </>
+                          ) : (
+                            <span className="text-slate-500 font-bold">None (0.0y)</span>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex justify-between items-center pt-1 border-t border-slate-800/80">
+                        <span className="text-slate-400 font-bold">Adjusted Carry:</span>
+                        <span className="text-green-400 font-bold text-[11px]">{liveCalculation.adjustedCarry.toFixed(1)}y</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-slate-400 font-bold">Projected Total:</span>
+                        <span className="text-slate-200 font-bold text-[11px]">{liveCalculation.projectedTotal.toFixed(1)}y</span>
+                      </div>
                     </div>
                   </div>
 
@@ -1654,7 +1746,7 @@ export default function App() {
 
                   <TrajectoryCanvas
                     carry={practiceCalculation.adjustedCarry}
-                    total={Math.round(practiceCalculation.adjustedCarry * 1.1)}
+                    total={practiceCalculation.projectedTotal}
                     elevation={practiceElevation}
                     windSpeed={practiceWindSpeed}
                     windAngle={practiceWindAngle}
@@ -1691,9 +1783,9 @@ export default function App() {
                   </div>
 
                   <div>
-                    <span className="text-[9px] text-slate-500 uppercase font-bold tracking-wider italic">ADJUSTED DISTANCE</span>
+                    <span className="text-[9px] text-slate-500 uppercase font-bold tracking-wider italic">ADJUSTED FLIGHT</span>
                     <div className="text-sm font-bold text-green-400 font-mono">
-                      {practiceCalculation.adjustedCarry} Yards
+                      {practiceCalculation.adjustedCarry}y carry <span className="text-amber-400 text-xs font-normal">(+{practiceCalculation.expectedRollout}y roll)</span>
                     </div>
                   </div>
                 </div>
@@ -2683,27 +2775,38 @@ export default function App() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3 mb-4">
-                
-                <div className={`p-3 rounded-2xl border text-center ${
+              <div className="grid grid-cols-3 gap-2 mb-4">
+                <div className={`p-2.5 rounded-2xl border text-center ${
                   theme === 'dark' ? 'bg-slate-900/20 border-slate-850' : 'bg-white border-slate-200'
                 }`}>
-                  <span className="text-[9px] text-slate-500 uppercase font-bold tracking-wider block italic mb-0.5">AIM ADJUSTMENT</span>
-                  <strong className={`text-sm font-bold font-mono ${
+                  <span className="text-[8px] text-slate-500 uppercase font-bold tracking-wider block italic mb-0.5">AIM ADJUSTMENT</span>
+                  <strong className={`text-xs font-bold font-mono block truncate ${
                     currentCalculation.lateralDrift > 0 ? 'text-red-400' : currentCalculation.lateralDrift < 0 ? 'text-blue-400' : 'text-slate-400'
                   }`}>
-                    {currentCalculation.lateralDrift === 0 ? 'AIM STRAIGHT' : 
-                     currentCalculation.lateralDrift > 0 ? `AIM ${Math.abs(currentCalculation.lateralDrift)}y LEFT` : `AIM ${Math.abs(currentCalculation.lateralDrift)}y RIGHT`}
+                    {currentCalculation.lateralDrift === 0 ? 'STRAIGHT' : 
+                     currentCalculation.lateralDrift > 0 ? `${Math.abs(currentCalculation.lateralDrift)}y LEFT` : `${Math.abs(currentCalculation.lateralDrift)}y RIGHT`}
                   </strong>
+                  <span className="text-[8px] text-slate-500 font-mono block">Lateral</span>
                 </div>
 
-                <div className={`p-3 rounded-2xl border text-center ${
+                <div className={`p-2.5 rounded-2xl border text-center ${
                   theme === 'dark' ? 'bg-slate-900/20 border-slate-850' : 'bg-white border-slate-200'
                 }`}>
-                  <span className="text-[9px] text-slate-500 uppercase font-bold tracking-wider block italic mb-0.5">ADJUSTED CARRY</span>
-                  <strong className="text-sm font-bold font-mono text-green-400">
+                  <span className="text-[8px] text-slate-500 uppercase font-bold tracking-wider block italic mb-0.5">ADJUSTED CARRY</span>
+                  <strong className="text-xs font-bold font-mono text-green-400 block">
                     {currentCalculation.adjustedCarry} yds
                   </strong>
+                  <span className="text-[8px] text-slate-500 font-mono block">Landing spot</span>
+                </div>
+
+                <div className={`p-2.5 rounded-2xl border text-center ${
+                  theme === 'dark' ? 'bg-slate-900/20 border-slate-850' : 'bg-white border-slate-200'
+                }`}>
+                  <span className="text-[8px] text-slate-500 uppercase font-bold tracking-wider block italic mb-0.5">EXPECTED ROLL</span>
+                  <strong className="text-xs font-bold font-mono text-amber-400 block">
+                    +{currentCalculation.expectedRollout} yds
+                  </strong>
+                  <span className="text-[8px] text-slate-500 font-mono block">Total: {currentCalculation.projectedTotal}y</span>
                 </div>
               </div>
 
@@ -2711,11 +2814,17 @@ export default function App() {
               <div className="flex items-center justify-between text-[10px] font-mono px-3.5 py-2.5 rounded-2xl bg-slate-900/40 border border-slate-800 mb-4 text-slate-300">
                 <div className="flex items-center gap-1.5">
                   <Wind className="h-3.5 w-3.5 text-green-400" />
-                  <span>Wind Profile: <strong className="text-white">{currentCalculation.shotCategory === 'Full/Tee' ? 'Full / Tee Shot' : currentCalculation.shotCategory === 'Approach' ? 'Approach Shot' : 'Short Shot'}</strong></span>
+                  <span>Wind: <strong className="text-white">{currentCalculation.shotCategory === 'Full/Tee' ? 'Full/Tee' : currentCalculation.shotCategory === 'Approach' ? 'Approach' : 'Short'}</strong></span>
                 </div>
-                <span className="text-green-400 font-bold">
-                  {currentCalculation.appliedHeadwindCoef ? `${currentCalculation.appliedHeadwindCoef.toFixed(2)}y / mph` : ''}
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className="text-green-400 font-bold">
+                    {currentCalculation.appliedHeadwindCoef ? `${currentCalculation.appliedHeadwindCoef.toFixed(2)}y / mph` : ''}
+                  </span>
+                  <span className="text-slate-600">|</span>
+                  <span className={currentCalculation.allowRollout ? 'text-amber-400 font-bold' : 'text-slate-500'}>
+                    {currentCalculation.allowRollout ? `Rollout Factored (-${currentCalculation.expectedRollout}y)` : 'Direct Carry'}
+                  </span>
+                </div>
               </div>
 
               <div className="space-y-2">
@@ -3280,6 +3389,81 @@ export default function App() {
                     </div>
                     <span className="text-[9px] text-slate-500 block leading-tight">Feet of downhill elevation change required to subtract 1 yard from play distance. Standard is 4.5.</span>
                   </div>
+
+                  {/* Club Ball Rollout Allowance Toggle */}
+                  <div className="space-y-1.5 pt-1 border-t border-slate-900/80">
+                    <div className="flex justify-between items-center text-xs">
+                      <div>
+                        <span className="font-medium text-slate-300 block">Club Ball Rollout Allowance</span>
+                        <span className="text-[9px] text-slate-500 block">Deduct expected roll from carry target so ball finishes at pin</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const nextVal = !(activeProfile.allowRollout ?? true);
+                          setAllowRollout(nextVal);
+                          updateProfileCalibrations({ allowRollout: nextVal });
+                          triggerHaptic('click');
+                        }}
+                        className={`px-2.5 py-1 rounded-lg text-[10px] font-mono font-bold tracking-wide transition-all cursor-pointer ${
+                          (activeProfile.allowRollout ?? true)
+                            ? 'bg-green-500/20 text-green-400 border border-green-500/40'
+                            : 'bg-slate-900 text-slate-500 border border-slate-800'
+                        }`}
+                      >
+                        {(activeProfile.allowRollout ?? true) ? 'ENABLED' : 'DISABLED'}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Rollout Firmness Multiplier */}
+                  <div className="space-y-1.5">
+                    <div className="flex justify-between items-center text-xs">
+                      <span className="font-medium text-slate-300">Rollout Firmness Multiplier</span>
+                      <span className="font-mono text-green-400 font-bold">{(activeProfile.rolloutMultiplier ?? 1.0).toFixed(2)}x</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const current = activeProfile.rolloutMultiplier ?? 1.0;
+                          const nextVal = Math.max(0.40, Math.round((current - 0.05) * 100) / 100);
+                          updateProfileCalibrations({ rolloutMultiplier: nextVal });
+                          triggerHaptic('click');
+                        }}
+                        className="w-7 h-7 shrink-0 rounded-full border border-slate-800 hover:border-green-500 flex items-center justify-center text-slate-400 hover:text-green-400 bg-slate-900/40 active:scale-90 transition-all select-none cursor-pointer"
+                        title="Decrease by 0.05"
+                      >
+                        <Minus className="h-3 w-3" />
+                      </button>
+                      <input
+                        type="range"
+                        min={0.40}
+                        max={1.80}
+                        step={0.05}
+                        value={activeProfile.rolloutMultiplier ?? 1.0}
+                        onChange={(e) => {
+                          updateProfileCalibrations({ rolloutMultiplier: Number(e.target.value) });
+                          triggerHaptic('click');
+                        }}
+                        className="flex-1 accent-green-500 h-1.5 rounded cursor-pointer"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const current = activeProfile.rolloutMultiplier ?? 1.0;
+                          const nextVal = Math.min(1.80, Math.round((current + 0.05) * 100) / 100);
+                          updateProfileCalibrations({ rolloutMultiplier: nextVal });
+                          triggerHaptic('click');
+                        }}
+                        className="w-7 h-7 shrink-0 rounded-full border border-slate-800 hover:border-green-500 flex items-center justify-center text-slate-400 hover:text-green-400 bg-slate-900/40 active:scale-90 transition-all select-none cursor-pointer"
+                        title="Increase by 0.05"
+                      >
+                        <Plus className="h-3 w-3" />
+                      </button>
+                    </div>
+                    <span className="text-[9px] text-slate-500 block leading-tight">Turf firmness and green speed scale. 1.0x = standard, 0.7x = soft/receptive, 1.3x = firm/fast links.</span>
+                  </div>
                 </div>
 
                 {/* Reset button */}
@@ -3295,8 +3479,11 @@ export default function App() {
                         windHeadwindCoefShort: undefined,
                         windTailwindCoefShort: undefined,
                         elevationUphillRatio: undefined,
-                        elevationDownhillRatio: undefined
+                        elevationDownhillRatio: undefined,
+                        allowRollout: true,
+                        rolloutMultiplier: 1.0
                       });
+                      setAllowRollout(true);
                       triggerHaptic('success');
                       alert('Calibration constants restored to system factory defaults!');
                     }}
@@ -3427,6 +3614,35 @@ AtmosphericMultiplier = TempMultiplier * AltitudeMultiplier
 // Adjusts Effective Distance accordingly
 EffectiveDistance = (TargetDistance + SlopeAdj + WindAdj) / AtmosphericMultiplier`}
                       </pre>
+                    </div>
+
+                    <div className="space-y-1">
+                      <h4 className="font-bold text-slate-200 uppercase text-[10px] tracking-wide text-green-500">6. Club Ball Rollout Allowance & Final Distance</h4>
+                      <p>
+                        When Rollout Allowance is enabled, the engine calculates required carry distance so that after landing, the ball rolls out to the target pin rather than overshooting it:
+                      </p>
+                      <pre className="p-2.5 rounded-lg bg-slate-900/60 text-[9.5px] font-mono text-slate-300 leading-normal border border-slate-800 overflow-x-auto">
+{`// 1. Calculate nominal rollout per club
+NominalRoll = Math.max(0, ClubTotal - ClubCarry)
+
+// 2. Modulate by Lie, Shot Type, and Firmness Multiplier
+ExpectedRollout = NominalRoll * RolloutLieMultiplier * RolloutShotMultiplier * FirmnessMultiplier
+
+// 3. Recommended Club selection evaluates Effective Total Reach
+EffectiveTotalReach = (ClubCarry * LieMod * ShotMod * PersonalMod) + ExpectedRollout
+// Pick shortest club where EffectiveTotalReach >= EffectiveDistance
+
+// 4. Adjusted Carry required to finish at the target pin
+RequiredCarryDistance = Math.max(0, EffectiveDistance - ExpectedRollout)
+AdjustedCarry = RequiredCarryDistance / (LieMod * ShotMod * PersonalMod)
+
+// 5. Projected Total confirms arrival at effective target pin
+ProjectedTotal = AdjustedCarry + ExpectedRollout`}
+                      </pre>
+                      <p className="text-[10px]">
+                        • <strong>Fairway / Tee</strong>: 1.00x rollout | <strong>First Cut</strong>: 0.85x | <strong>Heavy Rough</strong>: 0.65x | <strong>Sand</strong>: 0.35x<br />
+                        • <strong>Punch</strong>: 1.50x rollout | <strong>Chip</strong>: 1.40x | <strong>Draw</strong>: 1.20x | <strong>Fade</strong>: 0.80x | <strong>Flop</strong>: 0.20x
+                      </p>
                     </div>
                   </div>
                 </div>
