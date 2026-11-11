@@ -783,7 +783,7 @@ export default function App() {
       }`}>
         
         {/* Navigation Tab Panel */}
-        <div className="flex-1 overflow-y-auto pb-20">
+        <div className="flex-1 flex flex-col overflow-y-auto md:overflow-hidden pb-16 md:pb-0 h-[calc(100%-4rem)]">
           
           {/* HEADER BRANDING */}
           <div className={`sticky top-0 z-20 flex items-center justify-between px-4 py-3 border-b backdrop-blur-md ${
@@ -844,882 +844,814 @@ export default function App() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -15 }}
                 transition={{ duration: 0.2 }}
-                className="p-4 grid grid-cols-1 md:grid-cols-12 gap-5"
+                className="p-3 sm:p-4 h-full flex-1 grid grid-cols-1 md:grid-cols-12 gap-3 sm:gap-4 md:overflow-hidden"
               >
-                <div className="md:col-span-7 space-y-4 flex flex-col">
-                 {/* FAVORITES PRESET CAROUSEL (ONE TAP RECALL) */}
-                {favoritePresets.length > 0 && (
-                  <div className="space-y-1.5">
-                    <span className="text-[10px] text-slate-500 uppercase font-bold tracking-wider italic">
-                      ⚡ Quick Recall Presets
-                    </span>
-                    <div className="grid grid-cols-3 gap-2">
-                      {favoritePresets.map(fav => (
-                        <button
-                          key={fav.id}
-                          onClick={() => handleFavoriteRecall(fav)}
-                          className={`text-left p-2 rounded-xl border text-[10px] flex flex-col justify-between h-[58px] transition-all hover:scale-[1.02] cursor-pointer ${
-                            theme === 'dark' 
-                              ? 'bg-slate-900/80 border-slate-800 hover:border-green-500' 
-                              : 'bg-white border-slate-200 hover:border-green-500'
-                          }`}
-                        >
-                          <div className="flex items-center justify-between w-full font-mono font-bold">
-                            <span className="text-green-400">{fav.targetDistance}Y</span>
-                            <Star className="h-2.5 w-2.5 fill-amber-400 text-amber-400" />
-                          </div>
-                          <span className="opacity-70 font-medium truncate">{fav.lieType}</span>
-                          <span className="font-mono text-[9px] opacity-50 truncate">{fav.recommendedClub} ({fav.recommendedPower}%)</span>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* TARGET DISTANCE & ELEVATION BENTO */}
-                <div className="grid grid-cols-2 gap-3">
+                {/* LEFT COLUMN: INPUT CONTROLS & PARAMS */}
+                <div className="md:col-span-6 lg:col-span-6 flex flex-col justify-between h-full space-y-2.5 md:space-y-2 md:overflow-y-auto md:pr-1">
                   
-                  {/* Target Distance Keypad Slider */}
-                  <div className={`p-3 rounded-2xl border ${
-                    theme === 'dark' ? 'bg-slate-900/50 border-slate-800/80' : 'bg-white border-slate-200'
-                  }`}>
-                    <div className="flex items-center justify-between mb-1.5">
-                      <span className="text-[10px] text-slate-500 uppercase font-bold tracking-wider italic">Target Distance</span>
-                      <span className="text-[10px] font-bold font-mono text-green-500 uppercase tracking-widest">Yards</span>
+                  {/* FAVORITES PRESET CAROUSEL (ONE TAP RECALL) */}
+                  {favoritePresets.length > 0 && (
+                    <div className="space-y-1">
+                      <span className="text-[10px] text-slate-500 uppercase font-bold tracking-wider italic">
+                        ⚡ Quick Recall Presets
+                      </span>
+                      <div className="grid grid-cols-3 gap-1.5">
+                        {favoritePresets.map(fav => (
+                          <button
+                            key={fav.id}
+                            onClick={() => handleFavoriteRecall(fav)}
+                            className={`text-left p-1.5 rounded-xl border text-[9.5px] flex flex-col justify-between h-[52px] transition-all hover:scale-[1.02] cursor-pointer ${
+                              theme === 'dark' 
+                                ? 'bg-slate-900/80 border-slate-800 hover:border-green-500' 
+                                : 'bg-white border-slate-200 hover:border-green-500'
+                            }`}
+                          >
+                            <div className="flex items-center justify-between w-full font-mono font-bold">
+                              <span className="text-green-400">{fav.targetDistance}Y</span>
+                              <Star className="h-2.5 w-2.5 fill-amber-400 text-amber-400" />
+                            </div>
+                            <span className="opacity-70 font-medium truncate">{fav.lieType}</span>
+                            <span className="font-mono text-[8.5px] opacity-50 truncate">{fav.recommendedClub} ({fav.recommendedPower}%)</span>
+                          </button>
+                        ))}
+                      </div>
                     </div>
+                  )}
+
+                  {/* TARGET DISTANCE & ELEVATION BENTO */}
+                  <div className="grid grid-cols-2 gap-2">
                     
-                    <div className="text-center py-2">
-                      <input 
-                        type="number"
-                        value={targetDistance}
-                        onChange={(e) => {
-                          setTargetDistance(Math.max(1, Number(e.target.value)));
-                          triggerHaptic('click');
-                        }}
-                        className={`text-3xl font-extrabold font-mono text-center w-full bg-transparent focus:outline-none ${
-                          theme === 'dark' ? 'text-green-400' : 'text-slate-900'
-                        }`}
-                      />
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setTargetDistance(prev => Math.max(40, prev - 1));
-                          triggerHaptic('click');
-                        }}
-                        className="w-6 h-6 shrink-0 rounded-full border border-slate-700 dark:border-slate-800 hover:border-green-500 flex items-center justify-center text-slate-400 hover:text-green-400 bg-slate-900/50 active:scale-90 transition-all select-none cursor-pointer"
-                        title="Decrease by 1 yard"
-                      >
-                        <Minus className="h-3 w-3" />
-                      </button>
-                      <input 
-                        type="range"
-                        min={40}
-                        max={350}
-                        step={1}
-                        value={targetDistance}
-                        onChange={(e) => {
-                          setTargetDistance(Number(e.target.value));
-                          if (Number(e.target.value) % 10 === 0) triggerHaptic('click');
-                        }}
-                        className="flex-1 accent-green-500 h-1.5 rounded-lg cursor-pointer"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setTargetDistance(prev => Math.min(350, prev + 1));
-                          triggerHaptic('click');
-                        }}
-                        className="w-6 h-6 shrink-0 rounded-full border border-slate-700 dark:border-slate-800 hover:border-green-500 flex items-center justify-center text-slate-400 hover:text-green-400 bg-slate-900/50 active:scale-90 transition-all select-none cursor-pointer"
-                        title="Increase by 1 yard"
-                      >
-                        <Plus className="h-3 w-3" />
-                      </button>
-                    </div>
-                    <div className="flex justify-between text-[9px] font-mono opacity-50 mt-1">
-                      <span>40y</span>
-                      <span>150y</span>
-                      <span>350y</span>
-                    </div>
-                  </div>
-
-                  {/* Slope Elevation */}
-                  <div className={`p-3 rounded-2xl border ${
-                    theme === 'dark' ? 'bg-slate-900/50 border-slate-800/80' : 'bg-white border-slate-200'
-                  }`}>
-                    <div className="flex items-center justify-between mb-1.5">
-                      <span className="text-[10px] text-slate-500 uppercase font-bold tracking-wider italic">Slope Elevation</span>
-                      <span className={`text-[10px] font-mono font-bold px-1.5 rounded-md ${
-                        elevation > 0 
-                          ? 'bg-rose-500/10 text-rose-400' 
-                          : elevation < 0 ? 'bg-green-500/10 text-green-400' : 'bg-slate-500/10 text-slate-400'
-                      }`}>
-                        {elevation > 0 ? `+${elevation}ft` : `${elevation}ft`}
-                      </span>
-                    </div>
-
-                    <div className="text-center py-2 flex items-center justify-center gap-1">
-                      {elevation > 0 ? (
-                        <Mountain className="h-4 w-4 text-rose-500 animate-bounce" />
-                      ) : elevation < 0 ? (
-                        <Mountain className="h-4 w-4 text-green-400 rotate-180" />
-                      ) : (
-                        <Mountain className="h-4 w-4 text-slate-400" />
-                      )}
-                      <span className="text-xl font-bold font-mono">
-                        {elevation === 0 ? 'FLAT' : elevation > 0 ? `Uphill` : `Downhill`}
-                      </span>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setElevation(prev => Math.max(-100, prev - 1));
-                          triggerHaptic('click');
-                        }}
-                        className="w-6 h-6 shrink-0 rounded-full border border-slate-700 dark:border-slate-800 hover:border-green-500 flex items-center justify-center text-slate-400 hover:text-green-400 bg-slate-900/50 active:scale-90 transition-all select-none cursor-pointer"
-                        title="Decrease by 1 ft"
-                      >
-                        <Minus className="h-3 w-3" />
-                      </button>
-                      <input 
-                        type="range"
-                        min={-100}
-                        max={100}
-                        step={1}
-                        value={elevation}
-                        onChange={(e) => {
-                          setElevation(Number(e.target.value));
-                          if (Number(e.target.value) % 10 === 0) triggerHaptic('click');
-                        }}
-                        className="flex-1 accent-green-500 h-1.5 rounded-lg cursor-pointer"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setElevation(prev => Math.min(100, prev + 1));
-                          triggerHaptic('click');
-                        }}
-                        className="w-6 h-6 shrink-0 rounded-full border border-slate-700 dark:border-slate-800 hover:border-green-500 flex items-center justify-center text-slate-400 hover:text-green-400 bg-slate-900/50 active:scale-90 transition-all select-none cursor-pointer"
-                        title="Increase by 1 ft"
-                      >
-                        <Plus className="h-3 w-3" />
-                      </button>
-                    </div>
-                    <div className="flex justify-between text-[9px] font-mono opacity-50 mt-1">
-                      <span>-100ft</span>
-                      <span>0ft</span>
-                      <span>+100ft</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* WIND ADJUSTMENT COMPASS PANEL */}
-                <div className={`p-5 rounded-3xl border transition-all ${
-                  theme === 'dark' ? 'bg-slate-900/50 border-slate-800/80' : 'bg-white border-slate-200'
-                }`}>
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-1.5">
-                      <Wind className="h-4.5 w-4.5 text-green-400 animate-pulse" />
-                      <span className="text-[10px] sm:text-xs text-slate-500 uppercase font-black tracking-wider italic">Wind Adjuster</span>
-                    </div>
-                    <span className="text-xs sm:text-sm font-extrabold font-mono text-green-400 bg-green-500/10 px-2 py-0.5 rounded-full">{windSpeed} MPH</span>
-                  </div>
-
-                  <div className="flex flex-col sm:flex-row items-center justify-center sm:justify-around gap-6 py-2">
-                    {/* Visual Compass Dial */}
-                    <div 
-                      ref={compassRef}
-                      onMouseDown={handleMouseDown}
-                      onMouseMove={handleMouseMove}
-                      onTouchStart={handleTouchStart}
-                      onTouchMove={handleTouchMove}
-                      className={`relative w-36 h-36 rounded-full border-2 flex items-center justify-center select-none cursor-crosshair transition-all duration-200 touch-none ${
-                        theme === 'dark' 
-                          ? 'bg-slate-950/70 border-slate-800 hover:border-green-500/50 shadow-inner' 
-                          : 'bg-slate-50/50 border-slate-200 hover:border-green-500/40 shadow-inner'
-                      } ${isDraggingCompass ? 'ring-4 ring-green-500/20 border-green-500' : ''}`}
-                    >
-                      {/* Compass Ticks */}
-                      {Array.from({ length: 12 }).map((_, i) => {
-                        const angle = i * 30;
-                        return (
-                          <div
-                            key={i}
-                            className="absolute w-0.5 h-1.5 origin-bottom"
-                            style={{
-                              transform: `rotate(${angle}deg) translateY(-66px)`,
-                              bottom: '50%',
-                              left: 'calc(50% - 1px)',
-                              backgroundColor: angle % 90 === 0 
-                                ? 'rgba(34, 197, 94, 0.6)' 
-                                : theme === 'dark' ? 'rgba(148, 163, 184, 0.25)' : 'rgba(100, 116, 139, 0.35)',
-                            }}
-                          />
-                        );
-                      })}
-
-                      {/* Compass directions (clickable / interactive) */}
-                      <button
-                        type="button"
-                        onClick={(e) => { e.stopPropagation(); setWindAngle(0); triggerHaptic('click'); }}
-                        className={`absolute top-2 left-1/2 -translate-x-1/2 text-[10px] font-mono font-black transition-all cursor-pointer select-none outline-none z-20 ${
-                          (windAngle === 0 || windAngle === 360) ? 'text-green-400 scale-125 font-black drop-shadow-[0_0_6px_rgba(34,197,94,0.6)]' : 'text-slate-500 hover:text-green-400'
-                        }`}
-                        title="Set Wind North (0° - Headwind)"
-                      >
-                        N
-                      </button>
-                      <button
-                        type="button"
-                        onClick={(e) => { e.stopPropagation(); setWindAngle(45); triggerHaptic('click'); }}
-                        className={`absolute top-[24px] right-[24px] text-[8px] font-mono font-black transition-all cursor-pointer select-none outline-none z-20 ${
-                          windAngle === 45 ? 'text-green-400 scale-125 font-black drop-shadow-[0_0_6px_rgba(34,197,94,0.6)]' : 'text-slate-500 hover:text-green-400'
-                        }`}
-                        title="Set Wind North-East (45°)"
-                      >
-                        NE
-                      </button>
-                      <button
-                        type="button"
-                        onClick={(e) => { e.stopPropagation(); setWindAngle(90); triggerHaptic('click'); }}
-                        className={`absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-mono font-black transition-all cursor-pointer select-none outline-none z-20 ${
-                          windAngle === 90 ? 'text-green-400 scale-125 font-black drop-shadow-[0_0_6px_rgba(34,197,94,0.6)]' : 'text-slate-500 hover:text-green-400'
-                        }`}
-                        title="Set Wind East (90° - Right Crosswind)"
-                      >
-                        E
-                      </button>
-                      <button
-                        type="button"
-                        onClick={(e) => { e.stopPropagation(); setWindAngle(135); triggerHaptic('click'); }}
-                        className={`absolute bottom-[24px] right-[24px] text-[8px] font-mono font-black transition-all cursor-pointer select-none outline-none z-20 ${
-                          windAngle === 135 ? 'text-green-400 scale-125 font-black drop-shadow-[0_0_6px_rgba(34,197,94,0.6)]' : 'text-slate-500 hover:text-green-400'
-                        }`}
-                        title="Set Wind South-East (135°)"
-                      >
-                        SE
-                      </button>
-                      <button
-                        type="button"
-                        onClick={(e) => { e.stopPropagation(); setWindAngle(180); triggerHaptic('click'); }}
-                        className={`absolute bottom-2 left-1/2 -translate-x-1/2 text-[10px] font-mono font-black transition-all cursor-pointer select-none outline-none z-20 ${
-                          windAngle === 180 ? 'text-green-400 scale-125 font-black drop-shadow-[0_0_6px_rgba(34,197,94,0.6)]' : 'text-slate-500 hover:text-green-400'
-                        }`}
-                        title="Set Wind South (180° - Tailwind)"
-                      >
-                        S
-                      </button>
-                      <button
-                        type="button"
-                        onClick={(e) => { e.stopPropagation(); setWindAngle(225); triggerHaptic('click'); }}
-                        className={`absolute bottom-[24px] left-[24px] text-[8px] font-mono font-black transition-all cursor-pointer select-none outline-none z-20 ${
-                          windAngle === 225 ? 'text-green-400 scale-125 font-black drop-shadow-[0_0_6px_rgba(34,197,94,0.6)]' : 'text-slate-500 hover:text-green-400'
-                        }`}
-                        title="Set Wind South-West (225°)"
-                      >
-                        SW
-                      </button>
-                      <button
-                        type="button"
-                        onClick={(e) => { e.stopPropagation(); setWindAngle(270); triggerHaptic('click'); }}
-                        className={`absolute left-2 top-1/2 -translate-y-1/2 text-[10px] font-mono font-black transition-all cursor-pointer select-none outline-none z-20 ${
-                          windAngle === 270 ? 'text-green-400 scale-125 font-black drop-shadow-[0_0_6px_rgba(34,197,94,0.6)]' : 'text-slate-500 hover:text-green-400'
-                        }`}
-                        title="Set Wind West (270° - Left Crosswind)"
-                      >
-                        W
-                      </button>
-                      <button
-                        type="button"
-                        onClick={(e) => { e.stopPropagation(); setWindAngle(315); triggerHaptic('click'); }}
-                        className={`absolute top-[24px] left-[24px] text-[8px] font-mono font-black transition-all cursor-pointer select-none outline-none z-20 ${
-                          windAngle === 315 ? 'text-green-400 scale-125 font-black drop-shadow-[0_0_6px_rgba(34,197,94,0.6)]' : 'text-slate-500 hover:text-green-400'
-                        }`}
-                        title="Set Wind North-West (315°)"
-                      >
-                        NW
-                      </button>
-
-                      {/* Compass SVG needle with subtle gradients and drop shadow */}
-                      <svg 
-                        className="absolute inset-0 w-full h-full pointer-events-none transition-transform duration-300"
-                        style={{ transform: `rotate(${windAngle}deg)` }}
-                        viewBox="0 0 144 144"
-                      >
-                        <defs>
-                          <linearGradient id="windNeedleGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-                            <stop offset="0%" stopColor="#22c55e" />
-                            <stop offset="100%" stopColor="#15803d" />
-                          </linearGradient>
-                          <linearGradient id="windNeedleTail" x1="0%" y1="0%" x2="0%" y2="100%">
-                            <stop offset="0%" stopColor="#475569" />
-                            <stop offset="100%" stopColor="#1e293b" />
-                          </linearGradient>
-                        </defs>
-                        
-                        {/* Interactive drag path indicator */}
-                        <circle cx="72" cy="72" r="46" fill="none" stroke="rgba(34, 197, 94, 0.08)" strokeDasharray="3,3" />
-                        <circle cx="72" cy="72" r="60" fill="none" stroke="rgba(148, 163, 184, 0.06)" strokeWidth="1" />
-                        
-                        {/* Compass Needle - North Pointer */}
-                        <path 
-                          d="M 72 24 L 76.5 60 L 72 56.5 L 67.5 60 Z" 
-                          fill="url(#windNeedleGrad)" 
-                          className="drop-shadow-[0_2px_4px_rgba(34,197,94,0.4)]"
-                        />
-                        
-                        {/* Compass Needle - South Tail */}
-                        <path 
-                          d="M 72 120 L 74.5 84 L 72 87.5 L 69.5 84 Z" 
-                          fill="url(#windNeedleTail)" 
-                        />
-                      </svg>
-
-                      {/* Compass core */}
-                      <div className={`w-8 h-8 rounded-full shadow-lg z-10 flex items-center justify-center pointer-events-none border transition-colors ${
-                        theme === 'dark' ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
-                      }`}>
-                        <span className="text-[10px] font-black text-green-500 font-mono">{windAngle}°</span>
+                    {/* Target Distance Keypad Slider */}
+                    <div className={`p-2.5 rounded-2xl border flex flex-col justify-between ${
+                      theme === 'dark' ? 'bg-slate-900/50 border-slate-800/80' : 'bg-white border-slate-200'
+                    }`}>
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-[9.5px] text-slate-500 uppercase font-bold tracking-wider italic">Target Distance</span>
+                        <span className="text-[9.5px] font-bold font-mono text-green-500 uppercase tracking-widest">Yards</span>
                       </div>
-                    </div>
-
-                    {/* Wind control sliders */}
-                    <div className="flex-1 w-full space-y-4">
-                      <div>
-                        <div className="flex justify-between text-[11px] mb-1 font-mono">
-                          <span className="opacity-70 font-semibold uppercase tracking-wider">Speed</span>
-                          <span className="font-extrabold text-green-400">{windSpeed} mph</span>
-                        </div>
-                        <div className="flex items-center gap-2.5">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setWindSpeed(prev => Math.max(0, prev - 1));
-                              triggerHaptic('click');
-                            }}
-                            className={`w-8 h-8 shrink-0 rounded-full border flex items-center justify-center text-slate-400 hover:text-green-400 active:scale-90 transition-all select-none cursor-pointer ${
-                              theme === 'dark' ? 'border-slate-800 bg-slate-900/50' : 'border-slate-200 bg-slate-100/50'
-                            }`}
-                            title="Decrease by 1 mph"
-                          >
-                            <Minus className="h-3 w-3" />
-                          </button>
-                          <input 
-                            type="range"
-                            min={0}
-                            max={35}
-                            value={windSpeed}
-                            onChange={(e) => {
-                              setWindSpeed(Number(e.target.value));
-                              triggerHaptic('click');
-                            }}
-                            className="flex-1 accent-green-500 h-1.5 rounded-lg cursor-pointer bg-slate-800"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setWindSpeed(prev => Math.min(35, prev + 1));
-                              triggerHaptic('click');
-                            }}
-                            className={`w-8 h-8 shrink-0 rounded-full border flex items-center justify-center text-slate-400 hover:text-green-400 active:scale-90 transition-all select-none cursor-pointer ${
-                              theme === 'dark' ? 'border-slate-800 bg-slate-900/50' : 'border-slate-200 bg-slate-100/50'
-                            }`}
-                            title="Increase by 1 mph"
-                          >
-                            <Plus className="h-3 w-3" />
-                          </button>
-                        </div>
-                      </div>
-
-                      <div>
-                        <div className="flex justify-between text-[11px] mb-1 font-mono">
-                          <span className="opacity-70 font-semibold uppercase tracking-wider">Wind Angle</span>
-                          <span className="font-extrabold text-green-400">{windAngle}° <span className="opacity-60 font-normal">({getWindDirectionLabel(windAngle)})</span></span>
-                        </div>
-                        <div className="flex items-center gap-2.5">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setWindAngle(prev => Math.max(0, prev - 5));
-                              triggerHaptic('click');
-                            }}
-                            className={`w-8 h-8 shrink-0 rounded-full border flex items-center justify-center text-slate-400 hover:text-green-400 active:scale-90 transition-all select-none cursor-pointer ${
-                              theme === 'dark' ? 'border-slate-800 bg-slate-900/50' : 'border-slate-200 bg-slate-100/50'
-                            }`}
-                            title="Decrease by 5 degrees"
-                          >
-                            <Minus className="h-3 w-3" />
-                          </button>
-                          <input 
-                            type="range"
-                            min={0}
-                            max={360}
-                            step={5}
-                            value={windAngle}
-                            onChange={(e) => {
-                              setWindAngle(Number(e.target.value));
-                              if (Number(e.target.value) % 45 === 0) triggerHaptic('click');
-                            }}
-                            className="flex-1 accent-green-500 h-1.5 rounded-lg cursor-pointer bg-slate-800"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setWindAngle(prev => Math.min(360, prev + 5));
-                              triggerHaptic('click');
-                            }}
-                            className={`w-8 h-8 shrink-0 rounded-full border flex items-center justify-center text-slate-400 hover:text-green-400 active:scale-90 transition-all select-none cursor-pointer ${
-                              theme === 'dark' ? 'border-slate-800 bg-slate-900/50' : 'border-slate-200 bg-slate-100/50'
-                            }`}
-                            title="Increase by 5 degrees"
-                          >
-                            <Plus className="h-3 w-3" />
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Wind Direction feedback text */}
-                  <div className="flex justify-between text-[10px] font-mono opacity-50 mt-4 pt-3 border-t border-slate-800/40">
-                    <span className="flex items-center gap-1"><span>0°</span> <span className="opacity-70">= Headwind</span></span>
-                    <span className="flex items-center gap-1"><span>90°</span> <span className="opacity-70">= Right Cross</span></span>
-                    <span className="flex items-center gap-1"><span>180°</span> <span className="opacity-70">= Tailwind</span></span>
-                  </div>
-                </div>
-
-                {/* LIE & SHOT TYPE SELECTIONS */}
-                <div className="grid grid-cols-2 gap-3">
-                  
-                  {/* Lie Type selection */}
-                  <div className={`p-3 rounded-2xl border flex flex-col justify-between ${
-                    theme === 'dark' ? 'bg-slate-900/50 border-slate-800/80' : 'bg-white border-slate-200'
-                  }`}>
-                    <span className="text-[10px] text-slate-500 uppercase font-bold tracking-wider italic mb-1.5">Surface / Lie Type</span>
-                    <select
-                      value={selectedLie}
-                      onChange={(e) => {
-                        setSelectedLie(e.target.value as LieType);
-                        triggerHaptic('click');
-                      }}
-                      className={`w-full p-2.5 rounded-xl border text-xs font-bold focus:outline-none cursor-pointer ${
-                        theme === 'dark' ? 'bg-slate-900 border-slate-800 text-slate-100' : 'bg-slate-100 border-slate-200 text-slate-800'
-                      }`}
-                    >
-                      {LIES.map(lie => (
-                        <option key={lie} value={lie}>{lie}</option>
-                      ))}
-                    </select>
-                  </div>
-
-                  {/* Shot Type selection */}
-                  <div className={`p-3 rounded-2xl border flex flex-col justify-between ${
-                    theme === 'dark' ? 'bg-slate-900/50 border-slate-800/80' : 'bg-white border-slate-200'
-                  }`}>
-                    <span className="text-[10px] text-slate-500 uppercase font-bold tracking-wider italic mb-1.5">Shot Style / Pattern</span>
-                    <select
-                      value={selectedShot}
-                      onChange={(e) => {
-                        setSelectedShot(e.target.value as ShotType);
-                        triggerHaptic('click');
-                      }}
-                      className={`w-full p-2.5 rounded-xl border text-xs font-bold focus:outline-none cursor-pointer ${
-                        theme === 'dark' ? 'bg-slate-900 border-slate-800 text-slate-100' : 'bg-slate-100 border-slate-200 text-slate-800'
-                      }`}
-                    >
-                      {SHOT_TYPES.map(shot => (
-                        <option key={shot} value={shot}>{shot}</option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-
-                {/* SHOT CATEGORY & WIND PROFILE SELECTION */}
-                <div className={`p-3 rounded-2xl border ${
-                  theme === 'dark' ? 'bg-slate-900/50 border-slate-800/80' : 'bg-white border-slate-200'
-                }`}>
-                  <div className="flex items-center justify-between mb-1.5">
-                    <span className="text-[10px] text-slate-500 uppercase font-bold tracking-wider italic">Shot Category & Wind Profile</span>
-                    <span className="text-[9px] font-mono font-bold text-green-400">
-                      {liveCalculation.appliedHeadwindCoef ? `${liveCalculation.appliedHeadwindCoef.toFixed(2)}y/mph headwind rate` : ''}
-                    </span>
-                  </div>
-                  <div className="grid grid-cols-3 gap-1.5">
-                    {[
-                      { 
-                        key: 'Auto' as const, 
-                        label: 'Auto Detect', 
-                        sub: (selectedLie === 'Tee Box' || targetDistance >= 200) ? 'Full / Tee' : 'Approach' 
-                      },
-                      { 
-                        key: 'Full/Tee' as const, 
-                        label: 'Full / Tee', 
-                        sub: `${(activeProfile.windHeadwindFullTeeCoef ?? activeProfile.windHeadwindCoef ?? 1.15).toFixed(2)}y/mph` 
-                      },
-                      { 
-                        key: 'Approach' as const, 
-                        label: 'Approach', 
-                        sub: `${(activeProfile.windHeadwindApproachCoef ?? 1.25).toFixed(2)}y/mph` 
-                      }
-                    ].map(tab => (
-                      <button
-                        key={tab.key}
-                        type="button"
-                        onClick={() => {
-                          setShotCategory(tab.key);
-                          triggerHaptic('click');
-                        }}
-                        className={`py-2 px-1 rounded-xl text-center border transition-all cursor-pointer ${
-                          shotCategory === tab.key
-                            ? 'bg-green-500 text-slate-950 font-black border-green-500 shadow-md shadow-green-500/20 ring-2 ring-green-500/30'
-                            : theme === 'dark'
-                            ? 'bg-slate-900 border-slate-800 text-slate-300 hover:border-slate-700'
-                            : 'bg-slate-100 border-slate-200 text-slate-700 hover:border-slate-300'
-                        }`}
-                      >
-                        <span className="block text-[11px] font-bold leading-tight">{tab.label}</span>
-                        <span className={`block text-[8px] font-mono ${shotCategory === tab.key ? 'text-slate-950 font-bold' : 'text-slate-500'}`}>{tab.sub}</span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* CLUB BALL ROLLOUT ALLOWANCE CARD */}
-                <div className={`p-3 rounded-2xl border ${
-                  theme === 'dark' ? 'bg-slate-900/50 border-slate-800/80' : 'bg-white border-slate-200'
-                }`}>
-                  <div className="flex items-center justify-between mb-1.5">
-                    <span className="text-[10px] text-slate-500 uppercase font-bold tracking-wider italic">Club Ball Rollout Allowance</span>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const nextVal = !allowRollout;
-                        setAllowRollout(nextVal);
-                        updateProfileCalibrations({ allowRollout: nextVal });
-                        triggerHaptic('click');
-                      }}
-                      className={`px-2.5 py-0.5 rounded-full text-[9px] font-mono font-bold transition-all cursor-pointer ${
-                        allowRollout
-                          ? 'bg-green-500/20 text-green-400 border border-green-500/40'
-                          : 'bg-slate-800 text-slate-400 border border-slate-700'
-                      }`}
-                    >
-                      {allowRollout ? 'ROLLOUT: ACTIVE' : 'ROLLOUT: OFF'}
-                    </button>
-                  </div>
-                  <div className="flex items-center justify-between text-xs pt-1">
-                    <div className="flex flex-col">
-                      <span className="text-[11px] font-bold text-slate-200">
-                        {allowRollout 
-                          ? `${liveCalculation.recommendedClub} Rollout: +${liveCalculation.expectedRollout.toFixed(1)}y`
-                          : 'Direct Carry Mode (Zero Rollout)'}
-                      </span>
-                      <span className="text-[9px] text-slate-500">
-                        {allowRollout
-                          ? `Fly ${liveCalculation.adjustedCarry.toFixed(1)}y carry → rolls out to ${liveCalculation.projectedTotal.toFixed(1)}y target pin`
-                          : `Targets ${liveCalculation.adjustedCarry.toFixed(1)}y carry directly without roll`}
-                      </span>
-                    </div>
-                    <div className="text-right">
-                      <span className="text-[11px] font-mono font-bold text-green-400 block">
-                        {allowRollout ? `-${liveCalculation.expectedRollout.toFixed(1)}y` : '0.0y'}
-                      </span>
-                      <span className="text-[8px] text-slate-500 font-mono">
-                        {allowRollout ? 'Carry offset' : 'No offset'}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* UPHILL LIE SLOPE SELECTION */}
-                <div className={`p-3 rounded-2xl border ${
-                  theme === 'dark' ? 'bg-slate-900/50 border-slate-800/80' : 'bg-white border-slate-200'
-                }`}>
-                  <span className="text-[10px] text-slate-500 uppercase font-bold tracking-wider italic block mb-2">Uphill Lie Slope Severity</span>
-                  <div className="grid grid-cols-4 gap-1.5">
-                    {(['None', 'Green', 'Yellow', 'Red'] as const).map(severity => {
-                      const colors = {
-                        None: theme === 'dark' ? 'bg-slate-800/60 text-slate-400 border-slate-700/60' : 'bg-slate-100 text-slate-500 border-slate-200',
-                        Green: 'bg-green-500/20 text-green-400 border-green-500/30 hover:bg-green-500/35',
-                        Yellow: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30 hover:bg-yellow-500/35',
-                        Red: 'bg-red-500/20 text-red-400 border-red-500/30 hover:bg-red-500/35',
-                      };
-                      const activeColors = {
-                        None: theme === 'dark' ? 'bg-slate-700 text-slate-200 border-slate-600 ring-2 ring-slate-500/30' : 'bg-slate-200 text-slate-800 border-slate-300 ring-2 ring-slate-500/30',
-                        Green: 'bg-green-500 text-white border-green-500 shadow-md shadow-green-500/20 ring-2 ring-green-500/30',
-                        Yellow: 'bg-yellow-500 text-slate-950 border-yellow-500 shadow-md shadow-yellow-500/20 ring-2 ring-yellow-500/30',
-                        Red: 'bg-red-500 text-white border-red-500 shadow-md shadow-red-500/20 ring-2 ring-red-500/30',
-                      };
-                      const isActive = uphillLieSeverity === severity;
-                      return (
-                        <button
-                          key={severity}
-                          type="button"
-                          onClick={() => {
-                            setUphillLieSeverity(severity);
+                      
+                      <div className="text-center py-1">
+                        <input 
+                          type="number"
+                          value={targetDistance}
+                          onChange={(e) => {
+                            setTargetDistance(Math.max(1, Number(e.target.value)));
                             triggerHaptic('click');
                           }}
-                          className={`py-2 px-1 rounded-xl text-xs font-black border text-center transition-all cursor-pointer select-none ${
-                            isActive ? activeColors[severity] : colors[severity]
+                          className={`text-2xl sm:text-3xl font-extrabold font-mono text-center w-full bg-transparent focus:outline-none ${
+                            theme === 'dark' ? 'text-green-400' : 'text-slate-900'
                           }`}
+                        />
+                      </div>
+
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setTargetDistance(prev => Math.max(40, prev - 1));
+                            triggerHaptic('click');
+                          }}
+                          className="w-6 h-6 shrink-0 rounded-full border border-slate-700 dark:border-slate-800 hover:border-green-500 flex items-center justify-center text-slate-400 hover:text-green-400 bg-slate-900/50 active:scale-90 transition-all select-none cursor-pointer"
+                          title="Decrease by 1 yard"
                         >
-                          {severity === 'None' ? 'Flat (0)' : severity === 'Green' ? 'Green (+1)' : severity === 'Yellow' ? 'Yellow (+2)' : 'Red (+5)'}
+                          <Minus className="h-3 w-3" />
                         </button>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {/* ADVANCED / EXPERT ACCORDION */}
-                <div className={`rounded-2xl border overflow-hidden ${
-                  theme === 'dark' ? 'bg-slate-900/30 border-slate-800/60' : 'bg-slate-100/50 border-slate-200'
-                }`}>
-                  <button
-                    onClick={() => {
-                      setAdvancedOpen(!advancedOpen);
-                      triggerHaptic('click');
-                    }}
-                    className={`w-full p-3.5 flex items-center justify-between text-xs font-bold transition-colors cursor-pointer ${
-                      theme === 'dark' ? 'hover:bg-slate-900/60' : 'hover:bg-slate-200/50'
-                    }`}
-                  >
-                    <div className="flex items-center gap-1.5">
-                      <Cpu className="h-4 w-4 text-amber-500" />
-                      <span>Advanced Ball Flight Modifiers</span>
+                        <input 
+                          type="range"
+                          min={40}
+                          max={350}
+                          step={1}
+                          value={targetDistance}
+                          onChange={(e) => {
+                            setTargetDistance(Number(e.target.value));
+                            if (Number(e.target.value) % 10 === 0) triggerHaptic('click');
+                          }}
+                          className="flex-1 accent-green-500 h-1.5 rounded-lg cursor-pointer"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setTargetDistance(prev => Math.min(350, prev + 1));
+                            triggerHaptic('click');
+                          }}
+                          className="w-6 h-6 shrink-0 rounded-full border border-slate-700 dark:border-slate-800 hover:border-green-500 flex items-center justify-center text-slate-400 hover:text-green-400 bg-slate-900/50 active:scale-90 transition-all select-none cursor-pointer"
+                          title="Increase by 1 yard"
+                        >
+                          <Plus className="h-3 w-3" />
+                        </button>
+                      </div>
                     </div>
-                    {advancedOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-                  </button>
 
-                  <AnimatePresence>
-                    {advancedOpen && (
-                      <motion.div
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: 'auto', opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        className={`px-4 pb-4 space-y-3.5 border-t ${
-                          theme === 'dark' ? 'border-slate-800/60' : 'border-slate-200'
+                    {/* Slope Elevation */}
+                    <div className={`p-2.5 rounded-2xl border flex flex-col justify-between ${
+                      theme === 'dark' ? 'bg-slate-900/50 border-slate-800/80' : 'bg-white border-slate-200'
+                    }`}>
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-[9.5px] text-slate-500 uppercase font-bold tracking-wider italic">Slope Elevation</span>
+                        <span className={`text-[9.5px] font-mono font-bold px-1.5 rounded-md ${
+                          elevation > 0 
+                            ? 'bg-rose-500/10 text-rose-400' 
+                            : elevation < 0 ? 'bg-green-500/10 text-green-400' : 'bg-slate-500/10 text-slate-400'
+                        }`}>
+                          {elevation > 0 ? `+${elevation}ft` : `${elevation}ft`}
+                        </span>
+                      </div>
+
+                      <div className="text-center py-1 flex items-center justify-center gap-1">
+                        {elevation > 0 ? (
+                          <Mountain className="h-4 w-4 text-rose-500 animate-bounce" />
+                        ) : elevation < 0 ? (
+                          <Mountain className="h-4 w-4 text-green-400 rotate-180" />
+                        ) : (
+                          <Mountain className="h-4 w-4 text-slate-400" />
+                        )}
+                        <span className="text-lg sm:text-xl font-bold font-mono">
+                          {elevation === 0 ? 'FLAT' : elevation > 0 ? `Uphill` : `Downhill`}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setElevation(prev => Math.max(-100, prev - 1));
+                            triggerHaptic('click');
+                          }}
+                          className="w-6 h-6 shrink-0 rounded-full border border-slate-700 dark:border-slate-800 hover:border-green-500 flex items-center justify-center text-slate-400 hover:text-green-400 bg-slate-900/50 active:scale-90 transition-all select-none cursor-pointer"
+                          title="Decrease by 1 ft"
+                        >
+                          <Minus className="h-3 w-3" />
+                        </button>
+                        <input 
+                          type="range"
+                          min={-100}
+                          max={100}
+                          step={1}
+                          value={elevation}
+                          onChange={(e) => {
+                            setElevation(Number(e.target.value));
+                            if (Number(e.target.value) % 10 === 0) triggerHaptic('click');
+                          }}
+                          className="flex-1 accent-green-500 h-1.5 rounded-lg cursor-pointer"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setElevation(prev => Math.min(100, prev + 1));
+                            triggerHaptic('click');
+                          }}
+                          className="w-6 h-6 shrink-0 rounded-full border border-slate-700 dark:border-slate-800 hover:border-green-500 flex items-center justify-center text-slate-400 hover:text-green-400 bg-slate-900/50 active:scale-90 transition-all select-none cursor-pointer"
+                          title="Increase by 1 ft"
+                        >
+                          <Plus className="h-3 w-3" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* WIND ADJUSTMENT COMPASS PANEL */}
+                  <div className={`p-3 sm:p-3.5 rounded-2xl border transition-all ${
+                    theme === 'dark' ? 'bg-slate-900/50 border-slate-800/80' : 'bg-white border-slate-200'
+                  }`}>
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-1.5">
+                        <Wind className="h-4 w-4 text-green-400 animate-pulse" />
+                        <span className="text-[10px] text-slate-500 uppercase font-black tracking-wider italic">Wind Adjuster</span>
+                      </div>
+                      <span className="text-xs font-extrabold font-mono text-green-400 bg-green-500/10 px-2 py-0.5 rounded-full">{windSpeed} MPH</span>
+                    </div>
+
+                    <div className="flex flex-row items-center justify-between gap-3">
+                      {/* Visual Compass Dial */}
+                      <div 
+                        ref={compassRef}
+                        onMouseDown={handleMouseDown}
+                        onMouseMove={handleMouseMove}
+                        onTouchStart={handleTouchStart}
+                        onTouchMove={handleTouchMove}
+                        className={`relative w-28 h-28 sm:w-32 sm:h-32 shrink-0 rounded-full border-2 flex items-center justify-center select-none cursor-crosshair transition-all duration-200 touch-none ${
+                          theme === 'dark' 
+                            ? 'bg-slate-950/70 border-slate-800 hover:border-green-500/50 shadow-inner' 
+                            : 'bg-slate-50/50 border-slate-200 hover:border-green-500/40 shadow-inner'
+                        } ${isDraggingCompass ? 'ring-4 ring-green-500/20 border-green-500' : ''}`}
+                      >
+                        {/* Compass Ticks */}
+                        {Array.from({ length: 12 }).map((_, i) => {
+                          const angle = i * 30;
+                          return (
+                            <div
+                              key={i}
+                              className="absolute w-0.5 h-1.5 origin-bottom"
+                              style={{
+                                transform: `rotate(${angle}deg) translateY(-54px)`,
+                                bottom: '50%',
+                                left: 'calc(50% - 1px)',
+                                backgroundColor: angle % 90 === 0 
+                                  ? 'rgba(34, 197, 94, 0.6)' 
+                                  : theme === 'dark' ? 'rgba(148, 163, 184, 0.25)' : 'rgba(100, 116, 139, 0.35)',
+                              }}
+                            />
+                          );
+                        })}
+
+                        {/* Compass directions */}
+                        <button
+                          type="button"
+                          onClick={(e) => { e.stopPropagation(); setWindAngle(0); triggerHaptic('click'); }}
+                          className={`absolute top-1 left-1/2 -translate-x-1/2 text-[9px] font-mono font-black transition-all cursor-pointer select-none outline-none z-20 ${
+                            (windAngle === 0 || windAngle === 360) ? 'text-green-400 scale-125 font-black drop-shadow-[0_0_6px_rgba(34,197,94,0.6)]' : 'text-slate-500 hover:text-green-400'
+                          }`}
+                          title="Set Wind North (0° - Headwind)"
+                        >
+                          N
+                        </button>
+                        <button
+                          type="button"
+                          onClick={(e) => { e.stopPropagation(); setWindAngle(45); triggerHaptic('click'); }}
+                          className={`absolute top-[18px] right-[18px] text-[7.5px] font-mono font-black transition-all cursor-pointer select-none outline-none z-20 ${
+                            windAngle === 45 ? 'text-green-400 scale-125 font-black drop-shadow-[0_0_6px_rgba(34,197,94,0.6)]' : 'text-slate-500 hover:text-green-400'
+                          }`}
+                          title="Set Wind North-East (45°)"
+                        >
+                          NE
+                        </button>
+                        <button
+                          type="button"
+                          onClick={(e) => { e.stopPropagation(); setWindAngle(90); triggerHaptic('click'); }}
+                          className={`absolute right-1 top-1/2 -translate-y-1/2 text-[9px] font-mono font-black transition-all cursor-pointer select-none outline-none z-20 ${
+                            windAngle === 90 ? 'text-green-400 scale-125 font-black drop-shadow-[0_0_6px_rgba(34,197,94,0.6)]' : 'text-slate-500 hover:text-green-400'
+                          }`}
+                          title="Set Wind East (90° - Right Crosswind)"
+                        >
+                          E
+                        </button>
+                        <button
+                          type="button"
+                          onClick={(e) => { e.stopPropagation(); setWindAngle(135); triggerHaptic('click'); }}
+                          className={`absolute bottom-[18px] right-[18px] text-[7.5px] font-mono font-black transition-all cursor-pointer select-none outline-none z-20 ${
+                            windAngle === 135 ? 'text-green-400 scale-125 font-black drop-shadow-[0_0_6px_rgba(34,197,94,0.6)]' : 'text-slate-500 hover:text-green-400'
+                          }`}
+                          title="Set Wind South-East (135°)"
+                        >
+                          SE
+                        </button>
+                        <button
+                          type="button"
+                          onClick={(e) => { e.stopPropagation(); setWindAngle(180); triggerHaptic('click'); }}
+                          className={`absolute bottom-1 left-1/2 -translate-x-1/2 text-[9px] font-mono font-black transition-all cursor-pointer select-none outline-none z-20 ${
+                            windAngle === 180 ? 'text-green-400 scale-125 font-black drop-shadow-[0_0_6px_rgba(34,197,94,0.6)]' : 'text-slate-500 hover:text-green-400'
+                          }`}
+                          title="Set Wind South (180° - Tailwind)"
+                        >
+                          S
+                        </button>
+                        <button
+                          type="button"
+                          onClick={(e) => { e.stopPropagation(); setWindAngle(225); triggerHaptic('click'); }}
+                          className={`absolute bottom-[18px] left-[18px] text-[7.5px] font-mono font-black transition-all cursor-pointer select-none outline-none z-20 ${
+                            windAngle === 225 ? 'text-green-400 scale-125 font-black drop-shadow-[0_0_6px_rgba(34,197,94,0.6)]' : 'text-slate-500 hover:text-green-400'
+                          }`}
+                          title="Set Wind South-West (225°)"
+                        >
+                          SW
+                        </button>
+                        <button
+                          type="button"
+                          onClick={(e) => { e.stopPropagation(); setWindAngle(270); triggerHaptic('click'); }}
+                          className={`absolute left-1 top-1/2 -translate-y-1/2 text-[9px] font-mono font-black transition-all cursor-pointer select-none outline-none z-20 ${
+                            windAngle === 270 ? 'text-green-400 scale-125 font-black drop-shadow-[0_0_6px_rgba(34,197,94,0.6)]' : 'text-slate-500 hover:text-green-400'
+                          }`}
+                          title="Set Wind West (270° - Left Crosswind)"
+                        >
+                          W
+                        </button>
+                        <button
+                          type="button"
+                          onClick={(e) => { e.stopPropagation(); setWindAngle(315); triggerHaptic('click'); }}
+                          className={`absolute top-[18px] left-[18px] text-[7.5px] font-mono font-black transition-all cursor-pointer select-none outline-none z-20 ${
+                            windAngle === 315 ? 'text-green-400 scale-125 font-black drop-shadow-[0_0_6px_rgba(34,197,94,0.6)]' : 'text-slate-500 hover:text-green-400'
+                          }`}
+                          title="Set Wind North-West (315°)"
+                        >
+                          NW
+                        </button>
+
+                        {/* Compass SVG needle */}
+                        <svg 
+                          className="absolute inset-0 w-full h-full pointer-events-none transition-transform duration-300"
+                          style={{ transform: `rotate(${windAngle}deg)` }}
+                          viewBox="0 0 144 144"
+                        >
+                          <defs>
+                            <linearGradient id="windNeedleGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                              <stop offset="0%" stopColor="#22c55e" />
+                              <stop offset="100%" stopColor="#15803d" />
+                            </linearGradient>
+                            <linearGradient id="windNeedleTail" x1="0%" y1="0%" x2="0%" y2="100%">
+                              <stop offset="0%" stopColor="#475569" />
+                              <stop offset="100%" stopColor="#1e293b" />
+                            </linearGradient>
+                          </defs>
+                          <circle cx="72" cy="72" r="46" fill="none" stroke="rgba(34, 197, 94, 0.08)" strokeDasharray="3,3" />
+                          <path d="M 72 24 L 76.5 60 L 72 56.5 L 67.5 60 Z" fill="url(#windNeedleGrad)" className="drop-shadow-[0_2px_4px_rgba(34,197,94,0.4)]" />
+                          <path d="M 72 120 L 74.5 84 L 72 87.5 L 69.5 84 Z" fill="url(#windNeedleTail)" />
+                        </svg>
+
+                        {/* Compass core */}
+                        <div className={`w-7 h-7 rounded-full shadow-lg z-10 flex items-center justify-center pointer-events-none border transition-colors ${
+                          theme === 'dark' ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
+                        }`}>
+                          <span className="text-[9px] font-black text-green-500 font-mono">{windAngle}°</span>
+                        </div>
+                      </div>
+
+                      {/* Wind control sliders */}
+                      <div className="flex-1 space-y-2">
+                        <div>
+                          <div className="flex justify-between text-[10px] mb-0.5 font-mono">
+                            <span className="opacity-70 font-semibold uppercase tracking-wider">Speed</span>
+                            <span className="font-extrabold text-green-400">{windSpeed} mph</span>
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setWindSpeed(prev => Math.max(0, prev - 1));
+                                triggerHaptic('click');
+                              }}
+                              className={`w-6 h-6 shrink-0 rounded-full border flex items-center justify-center text-slate-400 hover:text-green-400 active:scale-90 transition-all cursor-pointer ${
+                                theme === 'dark' ? 'border-slate-800 bg-slate-900/50' : 'border-slate-200 bg-slate-100/50'
+                              }`}
+                            >
+                              <Minus className="h-3 w-3" />
+                            </button>
+                            <input 
+                              type="range"
+                              min={0}
+                              max={35}
+                              value={windSpeed}
+                              onChange={(e) => {
+                                setWindSpeed(Number(e.target.value));
+                                triggerHaptic('click');
+                              }}
+                              className="flex-1 accent-green-500 h-1.5 rounded-lg cursor-pointer bg-slate-800"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setWindSpeed(prev => Math.min(35, prev + 1));
+                                triggerHaptic('click');
+                              }}
+                              className={`w-6 h-6 shrink-0 rounded-full border flex items-center justify-center text-slate-400 hover:text-green-400 active:scale-90 transition-all cursor-pointer ${
+                                theme === 'dark' ? 'border-slate-800 bg-slate-900/50' : 'border-slate-200 bg-slate-100/50'
+                              }`}
+                            >
+                              <Plus className="h-3 w-3" />
+                            </button>
+                          </div>
+                        </div>
+
+                        <div>
+                          <div className="flex justify-between text-[10px] mb-0.5 font-mono">
+                            <span className="opacity-70 font-semibold uppercase tracking-wider">Wind Angle</span>
+                            <span className="font-extrabold text-green-400">{windAngle}° <span className="opacity-60 font-normal">({getWindDirectionLabel(windAngle)})</span></span>
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setWindAngle(prev => Math.max(0, prev - 5));
+                                triggerHaptic('click');
+                              }}
+                              className={`w-6 h-6 shrink-0 rounded-full border flex items-center justify-center text-slate-400 hover:text-green-400 active:scale-90 transition-all cursor-pointer ${
+                                theme === 'dark' ? 'border-slate-800 bg-slate-900/50' : 'border-slate-200 bg-slate-100/50'
+                              }`}
+                            >
+                              <Minus className="h-3 w-3" />
+                            </button>
+                            <input 
+                              type="range"
+                              min={0}
+                              max={360}
+                              step={5}
+                              value={windAngle}
+                              onChange={(e) => {
+                                setWindAngle(Number(e.target.value));
+                                if (Number(e.target.value) % 45 === 0) triggerHaptic('click');
+                              }}
+                              className="flex-1 accent-green-500 h-1.5 rounded-lg cursor-pointer bg-slate-800"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setWindAngle(prev => Math.min(360, prev + 5));
+                                triggerHaptic('click');
+                              }}
+                              className={`w-6 h-6 shrink-0 rounded-full border flex items-center justify-center text-slate-400 hover:text-green-400 active:scale-90 transition-all cursor-pointer ${
+                                theme === 'dark' ? 'border-slate-800 bg-slate-900/50' : 'border-slate-200 bg-slate-100/50'
+                              }`}
+                            >
+                              <Plus className="h-3 w-3" />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* LIE & SHOT TYPE SELECTIONS */}
+                  <div className="grid grid-cols-2 gap-2">
+                    {/* Lie Type selection */}
+                    <div className={`p-2.5 rounded-2xl border flex flex-col justify-between ${
+                      theme === 'dark' ? 'bg-slate-900/50 border-slate-800/80' : 'bg-white border-slate-200'
+                    }`}>
+                      <span className="text-[9.5px] text-slate-500 uppercase font-bold tracking-wider italic mb-1">Surface / Lie Type</span>
+                      <select
+                        value={selectedLie}
+                        onChange={(e) => {
+                          setSelectedLie(e.target.value as LieType);
+                          triggerHaptic('click');
+                        }}
+                        className={`w-full p-2 rounded-xl border text-xs font-bold focus:outline-none cursor-pointer ${
+                          theme === 'dark' ? 'bg-slate-900 border-slate-800 text-slate-100' : 'bg-slate-100 border-slate-200 text-slate-800'
                         }`}
                       >
-                        <div className="grid grid-cols-3 gap-2.5 pt-3">
-                          
-                          <div>
-                            <span className="text-[9px] font-bold uppercase opacity-60 block mb-1">Temp (°F)</span>
-                            <input 
-                              type="number"
-                              min={30}
-                              max={110}
-                              value={temperature}
-                              onChange={(e) => setTemperature(Number(e.target.value))}
-                              className={`w-full p-2 rounded-xl text-xs text-center font-mono focus:outline-none ${
-                                theme === 'dark' ? 'bg-slate-950 text-white' : 'bg-white text-slate-800'
-                              }`}
-                            />
-                          </div>
+                        {LIES.map(lie => (
+                          <option key={lie} value={lie}>{lie}</option>
+                        ))}
+                      </select>
+                    </div>
 
-                          <div>
-                            <span className="text-[9px] font-bold uppercase opacity-60 block mb-1">Altitude (ft)</span>
-                            <input 
-                              type="number"
-                              min={0}
-                              max={10000}
-                              step={500}
-                              value={altitude}
-                              onChange={(e) => setAltitude(Number(e.target.value))}
-                              className={`w-full p-2 rounded-xl text-xs text-center font-mono focus:outline-none ${
-                                theme === 'dark' ? 'bg-slate-950 text-white' : 'bg-white text-slate-800'
-                              }`}
-                            />
-                          </div>
+                    {/* Shot Type selection */}
+                    <div className={`p-2.5 rounded-2xl border flex flex-col justify-between ${
+                      theme === 'dark' ? 'bg-slate-900/50 border-slate-800/80' : 'bg-white border-slate-200'
+                    }`}>
+                      <span className="text-[9.5px] text-slate-500 uppercase font-bold tracking-wider italic mb-1">Shot Style / Pattern</span>
+                      <select
+                        value={selectedShot}
+                        onChange={(e) => {
+                          setSelectedShot(e.target.value as ShotType);
+                          triggerHaptic('click');
+                        }}
+                        className={`w-full p-2 rounded-xl border text-xs font-bold focus:outline-none cursor-pointer ${
+                          theme === 'dark' ? 'bg-slate-900 border-slate-800 text-slate-100' : 'bg-slate-100 border-slate-200 text-slate-800'
+                        }`}
+                      >
+                        {SHOT_TYPES.map(shot => (
+                          <option key={shot} value={shot}>{shot}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
 
-                          <div>
-                            <span className="text-[9px] font-bold uppercase opacity-60 block mb-1">Humidity (%)</span>
-                            <input 
-                              type="number"
-                              min={10}
-                              max={100}
-                              value={humidity}
-                              onChange={(e) => setHumidity(Number(e.target.value))}
-                              className={`w-full p-2 rounded-xl text-xs text-center font-mono focus:outline-none ${
-                                theme === 'dark' ? 'bg-slate-950 text-white' : 'bg-white text-slate-800'
-                              }`}
-                            />
-                          </div>
-                        </div>
+                  {/* SHOT CATEGORY & WIND PROFILE SELECTION */}
+                  <div className={`p-2.5 rounded-2xl border ${
+                    theme === 'dark' ? 'bg-slate-900/50 border-slate-800/80' : 'bg-white border-slate-200'
+                  }`}>
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-[9.5px] text-slate-500 uppercase font-bold tracking-wider italic">Shot Category & Wind Profile</span>
+                      <span className="text-[8.5px] font-mono font-bold text-green-400">
+                        {liveCalculation.appliedHeadwindCoef ? `${liveCalculation.appliedHeadwindCoef.toFixed(2)}y/mph` : ''}
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-3 gap-1.5">
+                      {[
+                        { 
+                          key: 'Auto' as const, 
+                          label: 'Auto Detect', 
+                          sub: (selectedLie === 'Tee Box' || targetDistance >= 200) ? 'Full / Tee' : 'Approach' 
+                        },
+                        { 
+                          key: 'Full/Tee' as const, 
+                          label: 'Full / Tee', 
+                          sub: `${(activeProfile.windHeadwindFullTeeCoef ?? activeProfile.windHeadwindCoef ?? 1.15).toFixed(2)}y/mph` 
+                        },
+                        { 
+                          key: 'Approach' as const, 
+                          label: 'Approach', 
+                          sub: `${(activeProfile.windHeadwindApproachCoef ?? 1.25).toFixed(2)}y/mph` 
+                        }
+                      ].map(tab => (
+                        <button
+                          key={tab.key}
+                          type="button"
+                          onClick={() => {
+                            setShotCategory(tab.key);
+                            triggerHaptic('click');
+                          }}
+                          className={`py-1.5 px-1 rounded-xl text-center border transition-all cursor-pointer ${
+                            shotCategory === tab.key
+                              ? 'bg-green-500 text-slate-950 font-black border-green-500 shadow-md shadow-green-500/20'
+                              : theme === 'dark'
+                              ? 'bg-slate-900 border-slate-800 text-slate-300 hover:border-slate-700'
+                              : 'bg-slate-100 border-slate-200 text-slate-700 hover:border-slate-300'
+                          }`}
+                        >
+                          <span className="block text-[10px] font-bold leading-tight">{tab.label}</span>
+                          <span className={`block text-[7.5px] font-mono ${shotCategory === tab.key ? 'text-slate-950 font-bold' : 'text-slate-500'}`}>{tab.sub}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
 
-                        <div className="text-[10px] opacity-50 font-mono space-y-0.5 leading-relaxed bg-black/20 p-2.5 rounded-lg border border-slate-800/30">
-                          <div>• Higher temperature lowers air density (adds carry)</div>
-                          <div>• For every 1,000 ft of altitude, ball carries 1.5% further</div>
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
-
-                {/* CALCULATE BUTTON */}
-                <button
-                  onClick={handleCalculateShot}
-                  className="w-full py-4 rounded-3xl bg-green-500 hover:bg-green-400 active:scale-95 text-slate-950 font-black tracking-widest transition-all text-sm uppercase shadow-lg shadow-green-900/10 flex items-center justify-center gap-2 cursor-pointer"
-                >
-                  <Sparkles className="h-5 w-5" />
-                  <span>Calculate Shot</span>
-                </button>
-
-                {/* HISTORY SHORTCUT PREVIEW */}
-                <div className="flex items-center justify-between pt-2">
-                  <span className="text-[10px] font-bold uppercase tracking-wider opacity-60">Shot logs database</span>
-                  <button
-                    onClick={() => {
-                      triggerHaptic('click');
-                      setShowHistoryModal(true);
-                    }}
-                    className="text-xs font-bold text-green-500 flex items-center gap-1 cursor-pointer"
-                  >
-                    <History className="h-3.5 w-3.5" />
-                    <span>View All ({history.length})</span>
-                  </button>
-                </div>
-              </div>
-
-              {/* RIGHT COLUMN (TABLET/DESKTOP LIVE CADDY SIDEBAR) */}
-              <div className="hidden md:flex md:col-span-5 flex-col h-full">
-                <div className={`p-5 rounded-3xl border flex-1 flex flex-col justify-between ${
-                  theme === 'dark' ? 'bg-slate-900/40 border-slate-800' : 'bg-slate-50 border-slate-200'
-                }`}>
-                  <div className="space-y-4">
-                    <div className="flex justify-between items-center">
+                  {/* ROLLOUT & SLOPE SEVERITY COMBINED ROW */}
+                  <div className="grid grid-cols-2 gap-2">
+                    {/* Rollout Toggle */}
+                    <div className={`p-2.5 rounded-2xl border flex items-center justify-between ${
+                      theme === 'dark' ? 'bg-slate-900/50 border-slate-800/80' : 'bg-white border-slate-200'
+                    }`}>
                       <div>
-                        <span className="text-[10px] font-black uppercase tracking-widest text-green-500 block italic leading-none">
-                          Live Shot Telemetry
-                        </span>
-                        <span className="text-[10px] text-slate-400 block mt-1">
-                          Real-time tablet flight predictor
+                        <span className="text-[9px] text-slate-500 uppercase font-bold tracking-wider italic block">Rollout Allowance</span>
+                        <span className="text-[10px] font-bold text-slate-200 block">
+                          {allowRollout ? `-${liveCalculation.expectedRollout.toFixed(1)}y` : 'Disabled'}
                         </span>
                       </div>
-                      <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" title="Telemetry live"></div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const nextVal = !allowRollout;
+                          setAllowRollout(nextVal);
+                          updateProfileCalibrations({ allowRollout: nextVal });
+                          triggerHaptic('click');
+                        }}
+                        className={`px-2 py-1 rounded-lg text-[9px] font-mono font-bold transition-all cursor-pointer ${
+                          allowRollout
+                            ? 'bg-green-500/20 text-green-400 border border-green-500/40'
+                            : 'bg-slate-800 text-slate-400 border border-slate-700'
+                        }`}
+                      >
+                        {allowRollout ? 'ACTIVE' : 'OFF'}
+                      </button>
                     </div>
 
-                    {/* Main display showing liveCalculation */}
-                    <div className="bg-slate-950/60 rounded-2xl border border-slate-850 p-4 text-center relative overflow-hidden">
-                      <div className="absolute -top-12 -right-12 w-24 h-24 bg-green-500/5 rounded-full blur-2xl"></div>
-                      <span className="text-[8px] text-green-400 font-black uppercase tracking-[0.3em] block mb-1">RECOMMENDED CLUB</span>
-                      <h2 className="text-4xl font-black text-white leading-none tracking-tighter uppercase mb-2">
-                        {liveCalculation.recommendedClub || 'N/A'}
-                      </h2>
-                      
-                      <div className="flex justify-center items-center gap-4 mt-3 pt-3 border-t border-slate-800/40">
-                        <div className="flex flex-col items-center">
-                          <span className="text-lg font-mono text-slate-100 font-black">{liveCalculation.recommendedPower}%</span>
-                          <span className="text-[8px] text-slate-500 uppercase font-bold tracking-wider">Swing Power</span>
-                        </div>
-                        <div className="h-6 w-[1px] bg-slate-800"></div>
-                        <div className="flex flex-col items-center">
-                          <span className="text-lg font-mono text-slate-100 font-black">
-                            {liveCalculation.lateralDrift === 0 ? '0.0y' : `${Math.abs(liveCalculation.lateralDrift)}y`}
-                          </span>
-                          <span className="text-[8px] text-slate-500 uppercase font-bold tracking-wider">
-                            {liveCalculation.lateralDrift > 0 ? 'Left Bias' : liveCalculation.lateralDrift < 0 ? 'Right Bias' : 'Straight'}
-                          </span>
-                        </div>
+                    {/* Uphill Lie Slope Severity */}
+                    <div className={`p-2.5 rounded-2xl border flex flex-col justify-between ${
+                      theme === 'dark' ? 'bg-slate-900/50 border-slate-800/80' : 'bg-white border-slate-200'
+                    }`}>
+                      <span className="text-[9px] text-slate-500 uppercase font-bold tracking-wider italic block mb-1">Green Slope Severity</span>
+                      <div className="grid grid-cols-4 gap-1">
+                        {(['None', 'Green', 'Yellow', 'Red'] as const).map(severity => {
+                          const activeColors = {
+                            None: 'bg-slate-700 text-slate-200 border-slate-600',
+                            Green: 'bg-green-500 text-slate-950 border-green-500 font-black',
+                            Yellow: 'bg-yellow-500 text-slate-950 border-yellow-500 font-black',
+                            Red: 'bg-red-500 text-white border-red-500 font-black',
+                          };
+                          const isActive = uphillLieSeverity === severity;
+                          return (
+                            <button
+                              key={severity}
+                              type="button"
+                              onClick={() => {
+                                setUphillLieSeverity(severity);
+                                triggerHaptic('click');
+                              }}
+                              className={`py-1 text-[8.5px] font-bold rounded-lg border text-center transition-all cursor-pointer ${
+                                isActive 
+                                  ? activeColors[severity] 
+                                  : 'bg-slate-900/40 border-slate-800 text-slate-400'
+                              }`}
+                            >
+                              {severity === 'None' ? 'Flat' : severity === 'Green' ? '+1y' : severity === 'Yellow' ? '+2y' : '+5y'}
+                            </button>
+                          );
+                        })}
                       </div>
                     </div>
+                  </div>
 
-                    {/* Side-by-side details */}
-                    <div className="grid grid-cols-2 gap-2.5">
-                      <div className={`p-3 rounded-xl border text-center ${
-                        theme === 'dark' ? 'bg-slate-950/40 border-slate-850' : 'bg-slate-100/50 border-slate-200'
-                      }`}>
-                        <span className="text-[8px] text-slate-500 uppercase font-bold tracking-wider block mb-0.5">AIM CORRECTION</span>
-                        <strong className={`text-[11px] font-black font-mono block truncate ${
-                          liveCalculation.lateralDrift > 0 ? 'text-rose-400' : liveCalculation.lateralDrift < 0 ? 'text-blue-400' : 'text-slate-400'
-                        }`}>
-                          {liveCalculation.lateralDrift === 0 ? 'AIM STRAIGHT' : 
-                           liveCalculation.lateralDrift > 0 ? `AIM ${Math.abs(liveCalculation.lateralDrift)}y LEFT` : `AIM ${Math.abs(liveCalculation.lateralDrift)}y RIGHT`}
-                        </strong>
+                  {/* ADVANCED ACCORDION */}
+                  <div className={`rounded-2xl border overflow-hidden ${
+                    theme === 'dark' ? 'bg-slate-900/30 border-slate-800/60' : 'bg-slate-100/50 border-slate-200'
+                  }`}>
+                    <button
+                      onClick={() => {
+                        setAdvancedOpen(!advancedOpen);
+                        triggerHaptic('click');
+                      }}
+                      className={`w-full p-2.5 flex items-center justify-between text-xs font-bold transition-colors cursor-pointer ${
+                        theme === 'dark' ? 'hover:bg-slate-900/60' : 'hover:bg-slate-200/50'
+                      }`}
+                    >
+                      <div className="flex items-center gap-1.5">
+                        <Cpu className="h-3.5 w-3.5 text-amber-500" />
+                        <span>Advanced Ball Flight Modifiers</span>
                       </div>
+                      {advancedOpen ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
+                    </button>
 
-                      <div className={`p-3 rounded-xl border text-center ${
-                        theme === 'dark' ? 'bg-slate-950/40 border-slate-850' : 'bg-slate-100/50 border-slate-200'
-                      }`}>
-                        <span className="text-[8px] text-slate-500 uppercase font-bold tracking-wider block mb-0.5">PLAYS LIKE DIST.</span>
-                        <strong className="text-[11px] font-black font-mono text-green-400 block">
-                          {liveCalculation.playsLikeDistance.toFixed(1)} YARDS
-                        </strong>
-                      </div>
-                    </div>
+                    <AnimatePresence>
+                      {advancedOpen && (
+                        <motion.div
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: 'auto', opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          className={`px-3 pb-3 space-y-2 border-t ${
+                            theme === 'dark' ? 'border-slate-800/60' : 'border-slate-200'
+                          }`}
+                        >
+                          <div className="grid grid-cols-3 gap-2 pt-2">
+                            <div>
+                              <span className="text-[8.5px] font-bold uppercase opacity-60 block mb-0.5">Temp (°F)</span>
+                              <input 
+                                type="number"
+                                min={30}
+                                max={110}
+                                value={temperature}
+                                onChange={(e) => setTemperature(Number(e.target.value))}
+                                className={`w-full p-1.5 rounded-lg text-xs text-center font-mono focus:outline-none ${
+                                  theme === 'dark' ? 'bg-slate-950 text-white' : 'bg-white text-slate-800'
+                                }`}
+                              />
+                            </div>
+                            <div>
+                              <span className="text-[8.5px] font-bold uppercase opacity-60 block mb-0.5">Altitude (ft)</span>
+                              <input 
+                                type="number"
+                                min={0}
+                                max={10000}
+                                step={500}
+                                value={altitude}
+                                onChange={(e) => setAltitude(Number(e.target.value))}
+                                className={`w-full p-1.5 rounded-lg text-xs text-center font-mono focus:outline-none ${
+                                  theme === 'dark' ? 'bg-slate-950 text-white' : 'bg-white text-slate-800'
+                                }`}
+                              />
+                            </div>
+                            <div>
+                              <span className="text-[8.5px] font-bold uppercase opacity-60 block mb-0.5">Humidity (%)</span>
+                              <input 
+                                type="number"
+                                min={10}
+                                max={100}
+                                value={humidity}
+                                onChange={(e) => setHumidity(Number(e.target.value))}
+                                className={`w-full p-1.5 rounded-lg text-xs text-center font-mono focus:outline-none ${
+                                  theme === 'dark' ? 'bg-slate-950 text-white' : 'bg-white text-slate-800'
+                                }`}
+                              />
+                            </div>
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
 
-                    {/* Decomposition components */}
-                    <div className="space-y-1.5 text-[10px] font-mono opacity-90 bg-slate-950/40 p-3 rounded-xl border border-slate-850">
-                      <div className="flex justify-between">
-                        <span className="text-slate-500">Target Yardage:</span>
-                        <span className="text-slate-300 font-bold">{targetDistance}y</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-slate-500">Elevation Offset:</span>
-                        <span className={liveCalculation.slopeAdjustment > 0 ? 'text-rose-400' : liveCalculation.slopeAdjustment < 0 ? 'text-green-400' : 'text-slate-300'}>
-                          {liveCalculation.slopeAdjustment > 0 ? `+${liveCalculation.slopeAdjustment.toFixed(1)}y` : liveCalculation.slopeAdjustment < 0 ? `${liveCalculation.slopeAdjustment.toFixed(1)}y` : '0.0y'}
-                        </span>
-                      </div>
+                  {/* CALCULATE BUTTON (Mobile View Only) */}
+                  <button
+                    onClick={handleCalculateShot}
+                    className="md:hidden w-full py-3.5 rounded-2xl bg-green-500 hover:bg-green-400 active:scale-95 text-slate-950 font-black tracking-widest transition-all text-xs uppercase shadow-lg shadow-green-900/10 flex items-center justify-center gap-2 cursor-pointer"
+                  >
+                    <Sparkles className="h-4 w-4" />
+                    <span>Calculate Shot</span>
+                  </button>
+
+                </div>
+
+                {/* RIGHT COLUMN: CALCULATED RECOMMENDATION CARD (TABLET / DESKTOP VIEW) */}
+                <div className="hidden md:flex md:col-span-6 flex-col h-full overflow-hidden">
+                  <div className={`p-4 sm:p-5 rounded-3xl border flex-1 flex flex-col justify-between h-full overflow-hidden ${
+                    theme === 'dark' ? 'bg-slate-900/40 border-slate-800' : 'bg-slate-50 border-slate-200'
+                  }`}>
+                    <div className="space-y-2.5 flex-1 flex flex-col justify-between">
+                      {/* Card Header */}
                       <div className="flex justify-between items-center">
-                        <span className="text-slate-500">Wind Adjustment:</span>
-                        <div className="flex items-center gap-1.5">
-                          {liveCalculation.windDistanceAdjustment !== 0 && (
-                            <span className="text-[9px] text-slate-500 font-sans">
-                              ({liveCalculation.shotCategory === 'Full/Tee' ? 'Full/Tee' : liveCalculation.shotCategory === 'Approach' ? 'Approach' : 'Short'} @ {liveCalculation.appliedHeadwindCoef?.toFixed(2)}y/mph)
+                        <div>
+                          <span className="text-[10px] font-black uppercase tracking-widest text-green-500 block italic leading-none">
+                            CALCULATED RECOMMENDATION
+                          </span>
+                          <span className="text-[10px] text-slate-400 block mt-0.5">
+                            Target: <strong className="text-slate-200 font-mono">{targetDistance}y Pin</strong> ({selectedLie})
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-1.5 bg-green-500/10 text-green-400 px-2.5 py-1 rounded-full text-[9px] font-mono font-bold border border-green-500/20">
+                          <span className="h-2 w-2 rounded-full bg-green-500 animate-pulse"></span>
+                          <span>LIVE ENGINE</span>
+                        </div>
+                      </div>
+
+                      {/* Main Recommended Club Hero Box */}
+                      <div className="bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 rounded-2xl border border-slate-800/80 p-3.5 text-center relative overflow-hidden shadow-xl">
+                        <div className="absolute -top-12 -right-12 w-28 h-28 bg-green-500/10 rounded-full blur-2xl"></div>
+                        <span className="text-[8.5px] text-green-400 font-black uppercase tracking-[0.25em] block mb-0.5">RECOMMENDED CLUB</span>
+                        <h2 className="text-3xl sm:text-4xl font-black text-white leading-none tracking-tighter uppercase mb-1.5 drop-shadow">
+                          {liveCalculation.recommendedClub || 'N/A'}
+                        </h2>
+                        
+                        <div className="flex items-center justify-center gap-3 text-xs font-mono font-bold pt-1.5 border-t border-slate-800/60">
+                          <span className="text-slate-200 bg-slate-800/90 px-2.5 py-0.5 rounded-full border border-slate-700">
+                            {liveCalculation.recommendedPower}% Swing Power
+                          </span>
+                          <span className={`px-2.5 py-0.5 rounded-full border ${
+                            liveCalculation.lateralDrift > 0 
+                              ? 'bg-rose-500/10 text-rose-400 border-rose-500/30' 
+                              : liveCalculation.lateralDrift < 0 ? 'bg-sky-500/10 text-sky-400 border-sky-500/30' : 'bg-slate-800 text-slate-300 border-slate-700'
+                          }`}>
+                            {liveCalculation.lateralDrift === 0 ? 'Straight Line' : liveCalculation.lateralDrift > 0 ? `Aim ${Math.abs(liveCalculation.lateralDrift)}y Left` : `Aim ${Math.abs(liveCalculation.lateralDrift)}y Right`}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* PROMINENT 3-METRIC HERO CARDS GRID (ADJUSTED CARRY, NET ADJUSTMENT, EXPECTED ROLL) */}
+                      <div className="grid grid-cols-3 gap-2 my-1">
+                        
+                        {/* 1. ADJUSTED CARRY */}
+                        <div className="p-3 rounded-2xl border border-green-500/40 bg-gradient-to-b from-green-500/15 via-slate-900/60 to-slate-950 text-center shadow-md flex flex-col justify-between">
+                          <div>
+                            <span className="text-[8px] text-green-400 font-black uppercase tracking-wider block italic mb-1">
+                              ADJUSTED CARRY
                             </span>
-                          )}
+                            <div className="text-xl sm:text-2xl font-black font-mono text-green-400 leading-none">
+                              {liveCalculation.adjustedCarry.toFixed(1)}<span className="text-xs font-bold text-green-500/80">y</span>
+                            </div>
+                          </div>
+                          <span className="text-[8.5px] text-slate-300 font-bold block mt-1.5 pt-1 border-t border-green-500/20">
+                            Fly Landing Spot
+                          </span>
+                        </div>
+
+                        {/* 2. NET ADJUSTMENT */}
+                        <div className="p-3 rounded-2xl border border-sky-500/40 bg-gradient-to-b from-sky-500/15 via-slate-900/60 to-slate-950 text-center shadow-md flex flex-col justify-between">
+                          <div>
+                            <span className="text-[8px] text-sky-400 font-black uppercase tracking-wider block italic mb-1">
+                              NET ADJUSTMENT
+                            </span>
+                            <div className={`text-xl sm:text-2xl font-black font-mono leading-none ${
+                              (liveCalculation.slopeAdjustment + liveCalculation.windDistanceAdjustment) >= 0 ? 'text-sky-400' : 'text-emerald-400'
+                            }`}>
+                              {(liveCalculation.slopeAdjustment + liveCalculation.windDistanceAdjustment) >= 0 ? '+' : ''}
+                              {(liveCalculation.slopeAdjustment + liveCalculation.windDistanceAdjustment).toFixed(1)}
+                              <span className="text-xs font-bold text-sky-500/80">y</span>
+                            </div>
+                          </div>
+                          <span className="text-[8.5px] text-slate-300 font-bold block mt-1.5 pt-1 border-t border-sky-500/20 truncate">
+                            Wind & Slope Offset
+                          </span>
+                        </div>
+
+                        {/* 3. EXPECTED ROLL */}
+                        <div className="p-3 rounded-2xl border border-amber-500/40 bg-gradient-to-b from-amber-500/15 via-slate-900/60 to-slate-950 text-center shadow-md flex flex-col justify-between">
+                          <div>
+                            <span className="text-[8px] text-amber-400 font-black uppercase tracking-wider block italic mb-1">
+                              EXPECTED ROLL
+                            </span>
+                            <div className="text-xl sm:text-2xl font-black font-mono text-amber-400 leading-none">
+                              {allowRollout ? `+${liveCalculation.expectedRollout.toFixed(1)}` : '0.0'}
+                              <span className="text-xs font-bold text-amber-500/80">y</span>
+                            </div>
+                          </div>
+                          <span className="text-[8.5px] text-slate-300 font-bold block mt-1.5 pt-1 border-t border-amber-500/20 truncate">
+                            {allowRollout ? `Rolls to ${liveCalculation.projectedTotal.toFixed(1)}y` : 'Direct Carry'}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Decomposition Breakdown */}
+                      <div className="space-y-1 text-[9.5px] font-mono bg-slate-950/70 p-2.5 rounded-xl border border-slate-800/80">
+                        <div className="flex justify-between">
+                          <span className="text-slate-400">Target Yardage Pin:</span>
+                          <span className="text-slate-200 font-bold">{targetDistance}y</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-slate-400">Slope Elevation ({elevation >= 0 ? `+${elevation}ft` : `${elevation}ft`}):</span>
+                          <span className={liveCalculation.slopeAdjustment > 0 ? 'text-rose-400 font-bold' : liveCalculation.slopeAdjustment < 0 ? 'text-green-400 font-bold' : 'text-slate-300'}>
+                            {liveCalculation.slopeAdjustment > 0 ? `+${liveCalculation.slopeAdjustment.toFixed(1)}y` : liveCalculation.slopeAdjustment < 0 ? `${liveCalculation.slopeAdjustment.toFixed(1)}y` : '0.0y'}
+                          </span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-slate-400">Wind Adjustment ({windSpeed}mph @ {windAngle}°):</span>
                           <span className={liveCalculation.windDistanceAdjustment > 0 ? 'text-rose-400 font-bold' : liveCalculation.windDistanceAdjustment < 0 ? 'text-green-400 font-bold' : 'text-slate-300'}>
                             {liveCalculation.windDistanceAdjustment > 0 ? `+${liveCalculation.windDistanceAdjustment.toFixed(1)}y` : liveCalculation.windDistanceAdjustment < 0 ? `${liveCalculation.windDistanceAdjustment.toFixed(1)}y` : '0.0y'}
                           </span>
                         </div>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-slate-500">Lie Penalty:</span>
-                        <span className={liveCalculation.liePenaltyFactor > 1 ? 'text-rose-400' : 'text-slate-300'}>
-                          {liveCalculation.liePenaltyFactor > 1 ? `x${liveCalculation.liePenaltyFactor.toFixed(2)}` : 'None'}
-                        </span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-slate-500">Club Rollout Allowance:</span>
-                        <div className="flex items-center gap-1.5">
-                          {liveCalculation.allowRollout ? (
-                            <>
-                              <span className="text-[9px] text-slate-500 font-sans">({liveCalculation.recommendedClub})</span>
-                              <span className="text-amber-400 font-bold">-{liveCalculation.expectedRollout.toFixed(1)}y</span>
-                            </>
-                          ) : (
-                            <span className="text-slate-500 font-bold">None (0.0y)</span>
-                          )}
+                        <div className="flex justify-between">
+                          <span className="text-slate-400">Rollout Allowance Offset:</span>
+                          <span className={allowRollout ? 'text-amber-400 font-bold' : 'text-slate-500'}>
+                            {allowRollout ? `-${liveCalculation.expectedRollout.toFixed(1)}y (${liveCalculation.recommendedClub})` : '0.0y (Disabled)'}
+                          </span>
+                        </div>
+                        <div className="flex justify-between items-center pt-1 border-t border-slate-800">
+                          <span className="text-slate-300 font-bold">Adjusted Carry (Required Fly):</span>
+                          <span className="text-green-400 font-black text-xs">{liveCalculation.adjustedCarry.toFixed(1)}y</span>
                         </div>
                       </div>
-                      <div className="flex justify-between items-center pt-1 border-t border-slate-800/80">
-                        <span className="text-slate-400 font-bold">Adjusted Carry:</span>
-                        <span className="text-green-400 font-bold text-[11px]">{liveCalculation.adjustedCarry.toFixed(1)}y</span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-slate-400 font-bold">Projected Total:</span>
-                        <span className="text-slate-200 font-bold text-[11px]">{liveCalculation.projectedTotal.toFixed(1)}y</span>
-                      </div>
+                    </div>
+
+                    {/* Primary CTA Button */}
+                    <div className="pt-2">
+                      <button
+                        type="button"
+                        onClick={handleCalculateShot}
+                        className="w-full py-3 bg-green-500 hover:bg-green-400 text-slate-950 font-black rounded-2xl text-xs uppercase flex items-center justify-center gap-2 cursor-pointer transition-all shadow-lg shadow-green-950/30"
+                      >
+                        <Sparkles className="h-4 w-4" />
+                        <span>Calculate & Log Shot to Database</span>
+                      </button>
                     </div>
                   </div>
-
-                  <div className="pt-4 space-y-2">
-                    <button
-                      type="button"
-                      onClick={handleCalculateShot}
-                      className="w-full py-3 bg-green-500 hover:bg-green-400 text-slate-950 font-black rounded-2xl text-xs uppercase flex items-center justify-center gap-1.5 cursor-pointer transition-colors shadow-md shadow-green-950/20"
-                    >
-                      <History className="h-4 w-4" />
-                      <span>Log Shot to Database</span>
-                    </button>
-                  </div>
                 </div>
-              </div>
 
-            </motion.div>
+              </motion.div>
             )}
 
             {/* TAB 2: PRACTICE MODE */}
@@ -2775,38 +2707,55 @@ export default function App() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-3 gap-2 mb-4">
-                <div className={`p-2.5 rounded-2xl border text-center ${
-                  theme === 'dark' ? 'bg-slate-900/20 border-slate-850' : 'bg-white border-slate-200'
-                }`}>
-                  <span className="text-[8px] text-slate-500 uppercase font-bold tracking-wider block italic mb-0.5">AIM ADJUSTMENT</span>
-                  <strong className={`text-xs font-bold font-mono block truncate ${
-                    currentCalculation.lateralDrift > 0 ? 'text-red-400' : currentCalculation.lateralDrift < 0 ? 'text-blue-400' : 'text-slate-400'
-                  }`}>
-                    {currentCalculation.lateralDrift === 0 ? 'STRAIGHT' : 
-                     currentCalculation.lateralDrift > 0 ? `${Math.abs(currentCalculation.lateralDrift)}y LEFT` : `${Math.abs(currentCalculation.lateralDrift)}y RIGHT`}
-                  </strong>
-                  <span className="text-[8px] text-slate-500 font-mono block">Lateral</span>
+              <div className="grid grid-cols-3 gap-2.5 mb-4">
+                {/* 1. ADJUSTED CARRY */}
+                <div className="p-3 rounded-2xl border border-green-500/40 bg-gradient-to-b from-green-500/15 via-slate-900/60 to-slate-950 text-center shadow-md flex flex-col justify-between">
+                  <div>
+                    <span className="text-[8px] text-green-400 font-black uppercase tracking-wider block italic mb-1">
+                      ADJUSTED CARRY
+                    </span>
+                    <div className="text-xl sm:text-2xl font-black font-mono text-green-400 leading-none">
+                      {currentCalculation.adjustedCarry.toFixed(1)}<span className="text-xs font-bold text-green-500/80">y</span>
+                    </div>
+                  </div>
+                  <span className="text-[8.5px] text-slate-300 font-bold block mt-1.5 pt-1 border-t border-green-500/20">
+                    Fly Landing Spot
+                  </span>
                 </div>
 
-                <div className={`p-2.5 rounded-2xl border text-center ${
-                  theme === 'dark' ? 'bg-slate-900/20 border-slate-850' : 'bg-white border-slate-200'
-                }`}>
-                  <span className="text-[8px] text-slate-500 uppercase font-bold tracking-wider block italic mb-0.5">ADJUSTED CARRY</span>
-                  <strong className="text-xs font-bold font-mono text-green-400 block">
-                    {currentCalculation.adjustedCarry} yds
-                  </strong>
-                  <span className="text-[8px] text-slate-500 font-mono block">Landing spot</span>
+                {/* 2. NET ADJUSTMENT */}
+                <div className="p-3 rounded-2xl border border-sky-500/40 bg-gradient-to-b from-sky-500/15 via-slate-900/60 to-slate-950 text-center shadow-md flex flex-col justify-between">
+                  <div>
+                    <span className="text-[8px] text-sky-400 font-black uppercase tracking-wider block italic mb-1">
+                      NET ADJUSTMENT
+                    </span>
+                    <div className={`text-xl sm:text-2xl font-black font-mono leading-none ${
+                      (currentCalculation.slopeAdjustment + currentCalculation.windDistanceAdjustment) >= 0 ? 'text-sky-400' : 'text-emerald-400'
+                    }`}>
+                      {(currentCalculation.slopeAdjustment + currentCalculation.windDistanceAdjustment) >= 0 ? '+' : ''}
+                      {(currentCalculation.slopeAdjustment + currentCalculation.windDistanceAdjustment).toFixed(1)}
+                      <span className="text-xs font-bold text-sky-500/80">y</span>
+                    </div>
+                  </div>
+                  <span className="text-[8.5px] text-slate-300 font-bold block mt-1.5 pt-1 border-t border-sky-500/20 truncate">
+                    Wind & Slope Offset
+                  </span>
                 </div>
 
-                <div className={`p-2.5 rounded-2xl border text-center ${
-                  theme === 'dark' ? 'bg-slate-900/20 border-slate-850' : 'bg-white border-slate-200'
-                }`}>
-                  <span className="text-[8px] text-slate-500 uppercase font-bold tracking-wider block italic mb-0.5">EXPECTED ROLL</span>
-                  <strong className="text-xs font-bold font-mono text-amber-400 block">
-                    +{currentCalculation.expectedRollout} yds
-                  </strong>
-                  <span className="text-[8px] text-slate-500 font-mono block">Total: {currentCalculation.projectedTotal}y</span>
+                {/* 3. EXPECTED ROLL */}
+                <div className="p-3 rounded-2xl border border-amber-500/40 bg-gradient-to-b from-amber-500/15 via-slate-900/60 to-slate-950 text-center shadow-md flex flex-col justify-between">
+                  <div>
+                    <span className="text-[8px] text-amber-400 font-black uppercase tracking-wider block italic mb-1">
+                      EXPECTED ROLL
+                    </span>
+                    <div className="text-xl sm:text-2xl font-black font-mono text-amber-400 leading-none">
+                      {currentCalculation.allowRollout ? `+${(currentCalculation.expectedRollout || 0).toFixed(1)}` : '0.0'}
+                      <span className="text-xs font-bold text-amber-500/80">y</span>
+                    </div>
+                  </div>
+                  <span className="text-[8.5px] text-slate-300 font-bold block mt-1.5 pt-1 border-t border-amber-500/20 truncate">
+                    {currentCalculation.allowRollout ? `Rolls to ${(currentCalculation.projectedTotal || currentCalculation.effectiveDistance).toFixed(1)}y` : 'Direct Carry'}
+                  </span>
                 </div>
               </div>
 
