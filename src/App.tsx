@@ -783,7 +783,7 @@ export default function App() {
       }`}>
         
         {/* Navigation Tab Panel */}
-        <div className="flex-1 flex flex-col overflow-y-auto md:overflow-hidden pb-16 md:pb-0 h-[calc(100%-4rem)]">
+        <div className="flex-1 flex flex-col overflow-y-auto pb-20 h-full">
           
           {/* HEADER BRANDING */}
           <div className={`sticky top-0 z-20 flex items-center justify-between px-4 py-3 border-b backdrop-blur-md ${
@@ -847,7 +847,7 @@ export default function App() {
                 className="p-3 sm:p-4 h-full flex-1 grid grid-cols-1 md:grid-cols-12 gap-3 sm:gap-4 md:overflow-hidden"
               >
                 {/* LEFT COLUMN: INPUT CONTROLS & PARAMS */}
-                <div className="md:col-span-6 lg:col-span-6 flex flex-col justify-between h-full space-y-2.5 md:space-y-2 md:overflow-y-auto md:pr-1">
+                <div className="md:col-span-6 lg:col-span-6 flex flex-col space-y-2.5 overflow-y-auto md:max-h-[calc(100vh-160px)] pb-6 md:pr-1.5">
                   
                   {/* FAVORITES PRESET CAROUSEL (ONE TAP RECALL) */}
                   {favoritePresets.length > 0 && (
@@ -1497,10 +1497,10 @@ export default function App() {
                     </AnimatePresence>
                   </div>
 
-                  {/* CALCULATE BUTTON (Mobile View Only) */}
+                  {/* CALCULATE BUTTON */}
                   <button
                     onClick={handleCalculateShot}
-                    className="md:hidden w-full py-3.5 rounded-2xl bg-green-500 hover:bg-green-400 active:scale-95 text-slate-950 font-black tracking-widest transition-all text-xs uppercase shadow-lg shadow-green-900/10 flex items-center justify-center gap-2 cursor-pointer"
+                    className="w-full py-3.5 rounded-2xl bg-green-500 hover:bg-green-400 active:scale-95 text-slate-950 font-black tracking-widest transition-all text-xs uppercase shadow-lg shadow-green-900/10 flex items-center justify-center gap-2 cursor-pointer mt-1"
                   >
                     <Sparkles className="h-4 w-4" />
                     <span>Calculate Shot</span>
