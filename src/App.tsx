@@ -882,40 +882,66 @@ export default function App() {
                   <div className="grid grid-cols-2 gap-2">
                     
                     {/* Target Distance Keypad Slider */}
-                    <div className={`p-2.5 rounded-2xl border flex flex-col justify-between ${
-                      theme === 'dark' ? 'bg-slate-900/50 border-slate-800/80' : 'bg-white border-slate-200'
+                    <div className={`p-2.5 sm:p-3 rounded-2xl border flex flex-col justify-between ${
+                      theme === 'dark' ? 'bg-slate-900/70 border-slate-800' : 'bg-white border-slate-200 shadow-sm'
                     }`}>
                       <div className="flex items-center justify-between mb-1">
-                        <span className="text-[9.5px] text-slate-500 uppercase font-bold tracking-wider italic">Target Distance</span>
-                        <span className="text-[9.5px] font-bold font-mono text-green-500 uppercase tracking-widest">Yards</span>
+                        <span className="text-[9.5px] text-slate-500 uppercase font-black tracking-wider italic">Target Distance</span>
+                        <span className="text-[9.5px] font-bold font-mono text-green-500 uppercase tracking-widest bg-green-500/10 px-1.5 py-0.5 rounded">Yards</span>
                       </div>
                       
-                      <div className="text-center py-1">
-                        <input 
-                          type="number"
-                          value={targetDistance}
-                          onChange={(e) => {
-                            setTargetDistance(Math.max(1, Number(e.target.value)));
-                            triggerHaptic('click');
-                          }}
-                          className={`text-2xl sm:text-3xl font-extrabold font-mono text-center w-full bg-transparent focus:outline-none ${
-                            theme === 'dark' ? 'text-green-400' : 'text-slate-900'
-                          }`}
-                        />
-                      </div>
-
-                      <div className="flex items-center gap-1.5">
+                      {/* Prominent Stepper Row */}
+                      <div className="flex items-center justify-between gap-1.5 py-1">
                         <button
                           type="button"
                           onClick={() => {
                             setTargetDistance(prev => Math.max(40, prev - 1));
                             triggerHaptic('click');
                           }}
-                          className="w-6 h-6 shrink-0 rounded-full border border-slate-700 dark:border-slate-800 hover:border-green-500 flex items-center justify-center text-slate-400 hover:text-green-400 bg-slate-900/50 active:scale-90 transition-all select-none cursor-pointer"
+                          className={`w-8 h-8 sm:w-9 sm:h-9 shrink-0 rounded-xl border flex items-center justify-center font-bold transition-all active:scale-90 select-none cursor-pointer shadow-sm ${
+                            theme === 'dark'
+                              ? 'bg-slate-800 hover:bg-slate-700 border-slate-700 text-white hover:text-green-400 hover:border-green-500'
+                              : 'bg-slate-100 hover:bg-slate-200 border-slate-300 text-slate-900 hover:text-green-600 hover:border-green-500'
+                          }`}
                           title="Decrease by 1 yard"
+                          aria-label="Decrease target distance by 1 yard"
                         >
-                          <Minus className="h-3 w-3" />
+                          <Minus className="h-4 w-4" />
                         </button>
+
+                        <div className="flex-1 text-center min-w-0">
+                          <input 
+                            type="number"
+                            value={targetDistance}
+                            onChange={(e) => {
+                              setTargetDistance(Math.max(1, Number(e.target.value)));
+                              triggerHaptic('click');
+                            }}
+                            className={`text-2xl sm:text-3xl font-black font-mono text-center w-full bg-transparent focus:outline-none ${
+                              theme === 'dark' ? 'text-green-400' : 'text-slate-900'
+                            }`}
+                          />
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setTargetDistance(prev => Math.min(350, prev + 1));
+                            triggerHaptic('click');
+                          }}
+                          className={`w-8 h-8 sm:w-9 sm:h-9 shrink-0 rounded-xl border flex items-center justify-center font-bold transition-all active:scale-90 select-none cursor-pointer shadow-sm ${
+                            theme === 'dark'
+                              ? 'bg-slate-800 hover:bg-slate-700 border-slate-700 text-white hover:text-green-400 hover:border-green-500'
+                              : 'bg-slate-100 hover:bg-slate-200 border-slate-300 text-slate-900 hover:text-green-600 hover:border-green-500'
+                          }`}
+                          title="Increase by 1 yard"
+                          aria-label="Increase target distance by 1 yard"
+                        >
+                          <Plus className="h-4 w-4" />
+                        </button>
+                      </div>
+
+                      <div className="space-y-0.5 pt-0.5">
                         <input 
                           type="range"
                           min={40}
@@ -926,29 +952,23 @@ export default function App() {
                             setTargetDistance(Number(e.target.value));
                             if (Number(e.target.value) % 10 === 0) triggerHaptic('click');
                           }}
-                          className="flex-1 accent-green-500 h-1.5 rounded-lg cursor-pointer"
+                          className="w-full accent-green-500 h-1.5 rounded-lg cursor-pointer bg-slate-800"
                         />
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setTargetDistance(prev => Math.min(350, prev + 1));
-                            triggerHaptic('click');
-                          }}
-                          className="w-6 h-6 shrink-0 rounded-full border border-slate-700 dark:border-slate-800 hover:border-green-500 flex items-center justify-center text-slate-400 hover:text-green-400 bg-slate-900/50 active:scale-90 transition-all select-none cursor-pointer"
-                          title="Increase by 1 yard"
-                        >
-                          <Plus className="h-3 w-3" />
-                        </button>
+                        <div className="flex justify-between text-[8px] font-mono opacity-50">
+                          <span>40y</span>
+                          <span>150y</span>
+                          <span>350y</span>
+                        </div>
                       </div>
                     </div>
 
                     {/* Slope Elevation */}
-                    <div className={`p-2.5 rounded-2xl border flex flex-col justify-between ${
-                      theme === 'dark' ? 'bg-slate-900/50 border-slate-800/80' : 'bg-white border-slate-200'
+                    <div className={`p-2.5 sm:p-3 rounded-2xl border flex flex-col justify-between ${
+                      theme === 'dark' ? 'bg-slate-900/70 border-slate-800' : 'bg-white border-slate-200 shadow-sm'
                     }`}>
                       <div className="flex items-center justify-between mb-1">
-                        <span className="text-[9.5px] text-slate-500 uppercase font-bold tracking-wider italic">Slope Elevation</span>
-                        <span className={`text-[9.5px] font-mono font-bold px-1.5 rounded-md ${
+                        <span className="text-[9.5px] text-slate-500 uppercase font-black tracking-wider italic">Slope Elevation</span>
+                        <span className={`text-[9.5px] font-mono font-extrabold px-1.5 py-0.5 rounded ${
                           elevation > 0 
                             ? 'bg-rose-500/10 text-rose-400' 
                             : elevation < 0 ? 'bg-green-500/10 text-green-400' : 'bg-slate-500/10 text-slate-400'
@@ -957,31 +977,65 @@ export default function App() {
                         </span>
                       </div>
 
-                      <div className="text-center py-1 flex items-center justify-center gap-1">
-                        {elevation > 0 ? (
-                          <Mountain className="h-4 w-4 text-rose-500 animate-bounce" />
-                        ) : elevation < 0 ? (
-                          <Mountain className="h-4 w-4 text-green-400 rotate-180" />
-                        ) : (
-                          <Mountain className="h-4 w-4 text-slate-400" />
-                        )}
-                        <span className="text-lg sm:text-xl font-bold font-mono">
-                          {elevation === 0 ? 'FLAT' : elevation > 0 ? `Uphill` : `Downhill`}
-                        </span>
-                      </div>
-
-                      <div className="flex items-center gap-1.5">
+                      {/* Prominent Stepper Row */}
+                      <div className="flex items-center justify-between gap-1.5 py-1">
                         <button
                           type="button"
                           onClick={() => {
                             setElevation(prev => Math.max(-100, prev - 1));
                             triggerHaptic('click');
                           }}
-                          className="w-6 h-6 shrink-0 rounded-full border border-slate-700 dark:border-slate-800 hover:border-green-500 flex items-center justify-center text-slate-400 hover:text-green-400 bg-slate-900/50 active:scale-90 transition-all select-none cursor-pointer"
+                          className={`w-8 h-8 sm:w-9 sm:h-9 shrink-0 rounded-xl border flex items-center justify-center font-bold transition-all active:scale-90 select-none cursor-pointer shadow-sm ${
+                            theme === 'dark'
+                              ? 'bg-slate-800 hover:bg-slate-700 border-slate-700 text-white hover:text-green-400 hover:border-green-500'
+                              : 'bg-slate-100 hover:bg-slate-200 border-slate-300 text-slate-900 hover:text-green-600 hover:border-green-500'
+                          }`}
                           title="Decrease by 1 ft"
+                          aria-label="Decrease elevation by 1 ft"
                         >
-                          <Minus className="h-3 w-3" />
+                          <Minus className="h-4 w-4" />
                         </button>
+
+                        <div className="flex-1 text-center min-w-0 flex items-center justify-center gap-1.5">
+                          {elevation > 0 ? (
+                            <Mountain className="h-4 w-4 text-rose-500 shrink-0 animate-bounce" />
+                          ) : elevation < 0 ? (
+                            <Mountain className="h-4 w-4 text-green-400 shrink-0 rotate-180" />
+                          ) : (
+                            <Mountain className="h-4 w-4 text-slate-400 shrink-0" />
+                          )}
+                          <div className="flex flex-col items-center leading-none">
+                            <span className={`text-xl sm:text-2xl font-black font-mono ${
+                              elevation > 0 ? 'text-rose-400' : elevation < 0 ? 'text-green-400' : 'text-slate-300'
+                            }`}>
+                              {elevation > 0 ? `+${elevation}` : elevation}
+                              <span className="text-xs font-semibold font-sans text-slate-500 ml-0.5">ft</span>
+                            </span>
+                            <span className="text-[8px] font-bold uppercase text-slate-500 tracking-wider mt-0.5">
+                              {elevation === 0 ? 'Flat' : elevation > 0 ? 'Uphill' : 'Downhill'}
+                            </span>
+                          </div>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setElevation(prev => Math.min(100, prev + 1));
+                            triggerHaptic('click');
+                          }}
+                          className={`w-8 h-8 sm:w-9 sm:h-9 shrink-0 rounded-xl border flex items-center justify-center font-bold transition-all active:scale-90 select-none cursor-pointer shadow-sm ${
+                            theme === 'dark'
+                              ? 'bg-slate-800 hover:bg-slate-700 border-slate-700 text-white hover:text-green-400 hover:border-green-500'
+                              : 'bg-slate-100 hover:bg-slate-200 border-slate-300 text-slate-900 hover:text-green-600 hover:border-green-500'
+                          }`}
+                          title="Increase by 1 ft"
+                          aria-label="Increase elevation by 1 ft"
+                        >
+                          <Plus className="h-4 w-4" />
+                        </button>
+                      </div>
+
+                      <div className="space-y-0.5 pt-0.5">
                         <input 
                           type="range"
                           min={-100}
@@ -992,19 +1046,13 @@ export default function App() {
                             setElevation(Number(e.target.value));
                             if (Number(e.target.value) % 10 === 0) triggerHaptic('click');
                           }}
-                          className="flex-1 accent-green-500 h-1.5 rounded-lg cursor-pointer"
+                          className="w-full accent-green-500 h-1.5 rounded-lg cursor-pointer bg-slate-800"
                         />
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setElevation(prev => Math.min(100, prev + 1));
-                            triggerHaptic('click');
-                          }}
-                          className="w-6 h-6 shrink-0 rounded-full border border-slate-700 dark:border-slate-800 hover:border-green-500 flex items-center justify-center text-slate-400 hover:text-green-400 bg-slate-900/50 active:scale-90 transition-all select-none cursor-pointer"
-                          title="Increase by 1 ft"
-                        >
-                          <Plus className="h-3 w-3" />
-                        </button>
+                        <div className="flex justify-between text-[8px] font-mono opacity-50">
+                          <span>-100ft</span>
+                          <span>0ft</span>
+                          <span>+100ft</span>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -1741,10 +1789,14 @@ export default function App() {
                           setPracticeDistance(prev => Math.max(60, prev - 1));
                           triggerHaptic('click');
                         }}
-                        className="w-5 h-5 shrink-0 rounded-full border border-slate-750 dark:border-slate-800 hover:border-green-500 flex items-center justify-center text-slate-400 hover:text-green-400 bg-slate-900/50 active:scale-90 transition-all select-none cursor-pointer"
+                        className={`w-7 h-7 sm:w-8 sm:h-8 shrink-0 rounded-lg border flex items-center justify-center font-bold transition-all active:scale-90 select-none cursor-pointer shadow-sm ${
+                          theme === 'dark'
+                            ? 'bg-slate-800 hover:bg-slate-700 border-slate-700 text-white hover:text-green-400 hover:border-green-500'
+                            : 'bg-white hover:bg-slate-100 border-slate-300 text-slate-800 hover:text-green-600 hover:border-green-500'
+                        }`}
                         title="Decrease by 1 yard"
                       >
-                        <Minus className="h-2.5 w-2.5" />
+                        <Minus className="h-3.5 w-3.5" />
                       </button>
                       <input
                         type="range"
@@ -1756,7 +1808,7 @@ export default function App() {
                           setPracticeDistance(Number(e.target.value));
                           triggerHaptic('click');
                         }}
-                        className="flex-1 accent-green-500 h-1 rounded"
+                        className="flex-1 accent-green-500 h-1.5 rounded cursor-pointer bg-slate-800"
                       />
                       <button
                         type="button"
@@ -1764,10 +1816,14 @@ export default function App() {
                           setPracticeDistance(prev => Math.min(300, prev + 1));
                           triggerHaptic('click');
                         }}
-                        className="w-5 h-5 shrink-0 rounded-full border border-slate-750 dark:border-slate-800 hover:border-green-500 flex items-center justify-center text-slate-400 hover:text-green-400 bg-slate-900/50 active:scale-90 transition-all select-none cursor-pointer"
+                        className={`w-7 h-7 sm:w-8 sm:h-8 shrink-0 rounded-lg border flex items-center justify-center font-bold transition-all active:scale-90 select-none cursor-pointer shadow-sm ${
+                          theme === 'dark'
+                            ? 'bg-slate-800 hover:bg-slate-700 border-slate-700 text-white hover:text-green-400 hover:border-green-500'
+                            : 'bg-white hover:bg-slate-100 border-slate-300 text-slate-800 hover:text-green-600 hover:border-green-500'
+                        }`}
                         title="Increase by 1 yard"
                       >
-                        <Plus className="h-2.5 w-2.5" />
+                        <Plus className="h-3.5 w-3.5" />
                       </button>
                     </div>
                   </div>
@@ -1786,10 +1842,14 @@ export default function App() {
                           setPracticeElevation(prev => Math.max(-80, prev - 1));
                           triggerHaptic('click');
                         }}
-                        className="w-5 h-5 shrink-0 rounded-full border border-slate-750 dark:border-slate-800 hover:border-green-500 flex items-center justify-center text-slate-400 hover:text-green-400 bg-slate-900/50 active:scale-90 transition-all select-none cursor-pointer"
+                        className={`w-7 h-7 sm:w-8 sm:h-8 shrink-0 rounded-lg border flex items-center justify-center font-bold transition-all active:scale-90 select-none cursor-pointer shadow-sm ${
+                          theme === 'dark'
+                            ? 'bg-slate-800 hover:bg-slate-700 border-slate-700 text-white hover:text-green-400 hover:border-green-500'
+                            : 'bg-white hover:bg-slate-100 border-slate-300 text-slate-800 hover:text-green-600 hover:border-green-500'
+                        }`}
                         title="Decrease by 1 ft"
                       >
-                        <Minus className="h-2.5 w-2.5" />
+                        <Minus className="h-3.5 w-3.5" />
                       </button>
                       <input
                         type="range"
@@ -1800,7 +1860,7 @@ export default function App() {
                           setPracticeElevation(Number(e.target.value));
                           triggerHaptic('click');
                         }}
-                        className="flex-1 accent-green-500 h-1 rounded"
+                        className="flex-1 accent-green-500 h-1.5 rounded cursor-pointer bg-slate-800"
                       />
                       <button
                         type="button"
@@ -1808,10 +1868,14 @@ export default function App() {
                           setPracticeElevation(prev => Math.min(80, prev + 1));
                           triggerHaptic('click');
                         }}
-                        className="w-5 h-5 shrink-0 rounded-full border border-slate-750 dark:border-slate-800 hover:border-green-500 flex items-center justify-center text-slate-400 hover:text-green-400 bg-slate-900/50 active:scale-90 transition-all select-none cursor-pointer"
+                        className={`w-7 h-7 sm:w-8 sm:h-8 shrink-0 rounded-lg border flex items-center justify-center font-bold transition-all active:scale-90 select-none cursor-pointer shadow-sm ${
+                          theme === 'dark'
+                            ? 'bg-slate-800 hover:bg-slate-700 border-slate-700 text-white hover:text-green-400 hover:border-green-500'
+                            : 'bg-white hover:bg-slate-100 border-slate-300 text-slate-800 hover:text-green-600 hover:border-green-500'
+                        }`}
                         title="Increase by 1 ft"
                       >
-                        <Plus className="h-2.5 w-2.5" />
+                        <Plus className="h-3.5 w-3.5" />
                       </button>
                     </div>
                   </div>
@@ -1830,10 +1894,15 @@ export default function App() {
                           setPracticeWindSpeed(prev => Math.max(0, prev - 1));
                           triggerHaptic('click');
                         }}
-                        className="w-5 h-5 shrink-0 rounded-full border border-slate-750 dark:border-slate-800 hover:border-green-500 flex items-center justify-center text-slate-400 hover:text-green-400 bg-slate-900/50 active:scale-90 transition-all select-none cursor-pointer"
+                        className={`w-7 h-7 sm:w-8 sm:h-8 shrink-0 rounded-lg border flex items-center justify-center font-bold transition-all active:scale-90 select-none cursor-pointer shadow-sm ${
+                          theme === 'dark'
+                            ? 'bg-slate-800 hover:bg-slate-700 border-slate-700 text-white hover:text-green-400 hover:border-green-500'
+                            : 'bg-white hover:bg-slate-100 border-slate-300 text-slate-800 hover:text-green-600 hover:border-green-500'
+                        }`}
                         title="Decrease by 1 mph"
+                        aria-label="Decrease wind speed by 1 mph"
                       >
-                        <Minus className="h-2.5 w-2.5" />
+                        <Minus className="h-3.5 w-3.5" />
                       </button>
                       <input
                         type="range"
@@ -1844,7 +1913,7 @@ export default function App() {
                           setPracticeWindSpeed(Number(e.target.value));
                           triggerHaptic('click');
                         }}
-                        className="flex-1 accent-green-500 h-1 rounded animate-none"
+                        className="flex-1 accent-green-500 h-1.5 rounded cursor-pointer bg-slate-800"
                       />
                       <button
                         type="button"
@@ -1852,10 +1921,15 @@ export default function App() {
                           setPracticeWindSpeed(prev => Math.min(30, prev + 1));
                           triggerHaptic('click');
                         }}
-                        className="w-5 h-5 shrink-0 rounded-full border border-slate-750 dark:border-slate-800 hover:border-green-500 flex items-center justify-center text-slate-400 hover:text-green-400 bg-slate-900/50 active:scale-90 transition-all select-none cursor-pointer"
+                        className={`w-7 h-7 sm:w-8 sm:h-8 shrink-0 rounded-lg border flex items-center justify-center font-bold transition-all active:scale-90 select-none cursor-pointer shadow-sm ${
+                          theme === 'dark'
+                            ? 'bg-slate-800 hover:bg-slate-700 border-slate-700 text-white hover:text-green-400 hover:border-green-500'
+                            : 'bg-white hover:bg-slate-100 border-slate-300 text-slate-800 hover:text-green-600 hover:border-green-500'
+                        }`}
                         title="Increase by 1 mph"
+                        aria-label="Increase wind speed by 1 mph"
                       >
-                        <Plus className="h-2.5 w-2.5" />
+                        <Plus className="h-3.5 w-3.5" />
                       </button>
                     </div>
                   </div>
